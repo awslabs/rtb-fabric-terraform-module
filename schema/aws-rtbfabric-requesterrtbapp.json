@@ -1,0 +1,249 @@
+{
+    "typeName": "AWS::RTBFabric::RequesterRtbApp",
+    "description": "Resource Type definition for AWS::RTBFabric::RequesterRtbApp Resource Type",
+    "definitions": {
+        "AppName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+        },
+        "Description": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9 ]+$"
+        },
+        "VpcId": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 5,
+            "relationshipRef": {
+                "typeName": "AWS::EC2::VPC",
+                "propertyPath": "/properties/VpcId"
+            }
+        },
+        "SubnetIds": {
+            "type": "array",
+            "description": "The ID of one or more subnets in order to create a rtbapp.",
+            "uniqueItems": true,
+            "insertionOrder": false,
+            "items": {
+                "type": "string",
+                "relationshipRef": {
+                    "typeName": "AWS::EC2::Subnet",
+                    "propertyPath": "/properties/SubnetId"
+                }
+            }
+        },
+        "SecurityGroupIds": {
+            "type": "array",
+            "description": "The ID of one or more security groups in order to create a rtbapp.",
+            "uniqueItems": true,
+            "insertionOrder": false,
+            "items": {
+                "type": "string",
+                "anyOf": [
+                    {
+                        "relationshipRef": {
+                            "typeName": "AWS::EC2::SecurityGroup",
+                            "propertyPath": "/properties/GroupId"
+                        }
+                    },
+                    {
+                        "relationshipRef": {
+                            "typeName": "AWS::EC2::SecurityGroup",
+                            "propertyPath": "/properties/Id"
+                        }
+                    }
+                ]
+            }
+        },
+        "ClientToken": {
+            "type": "string"
+        },
+        "RtbAppId": {
+            "type": "string",
+            "pattern": "^rtbapp-[a-z0-9-]{1,25}$"
+        },
+        "RtbAppEndpoint": {
+            "type": "string"
+        },
+        "Status": {
+            "type": "string",
+            "enum": [
+                "NEW",
+                "ACTIVATING",
+                "ACTIVE",
+                "DELETING",
+                "DELETED",
+                "ERROR",
+                "UPDATING",
+                "ISOLATING",
+                "ISOLATED",
+                "RESTORING"
+            ]
+        },
+        "CreatedTimestamp": {
+            "type": "string"
+        },
+        "UpdatedTimestamp": {
+            "type": "string"
+        },
+        "Arn": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 20,
+            "pattern": "^arn:aws:mpofxdevmu:[a-zA-Z0-9_-]+:[0-9]{12}:rtbApp/[a-zA-Z0-9-]+$"
+        },
+        "Tag": {
+            "description": "A key-value pair to associate with a resource.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "Key": {
+                    "type": "string",
+                    "description": "The key name of the tag. You can specify a value that is 1 to 128 Unicode characters in length and cannot be prefixed with aws:. You can use any of the following characters: the set of Unicode letters, digits, whitespace, _, ., /, =, +, and -. ",
+                    "minLength": 1,
+                    "maxLength": 128
+                },
+                "Value": {
+                    "type": "string",
+                    "description": "The value for the tag. You can specify a value that is 0 to 256 Unicode characters in length and cannot be prefixed with aws:. You can use any of the following characters: the set of Unicode letters, digits, whitespace, _, ., /, =, +, and -. ",
+                    "minLength": 0,
+                    "maxLength": 256
+                }
+            },
+            "required": [
+                "Key"
+            ]
+        },
+        "Tags": {
+            "type": "array",
+            "insertionOrder": false,
+            "uniqueItems": true,
+            "items": {
+                "$ref": "#/definitions/Tag"
+            },
+            "minItems": 0,
+            "maxItems": 50,
+            "description": "Tags to assign to the Requester RtbApp."
+        }
+    },
+    "properties": {
+        "Tags": {
+            "$ref": "#/definitions/Tags"
+        },
+        "AppName": {
+            "$ref": "#/definitions/AppName"
+        },
+        "Description": {
+            "$ref": "#/definitions/Description"
+        },
+        "VpcId": {
+            "$ref": "#/definitions/VpcId"
+        },
+        "SubnetIds": {
+            "$ref": "#/definitions/SubnetIds"
+        },
+        "SecurityGroupIds": {
+            "$ref": "#/definitions/SecurityGroupIds"
+        },
+        "ClientToken": {
+            "$ref": "#/definitions/ClientToken"
+        },
+        "RtbAppId": {
+            "$ref": "#/definitions/RtbAppId"
+        },
+        "RtbAppEndpoint": {
+            "$ref": "#/definitions/RtbAppEndpoint"
+        },
+        "Status": {
+            "$ref": "#/definitions/Status"
+        },
+        "CreatedTimestamp": {
+            "$ref": "#/definitions/CreatedTimestamp"
+        },
+        "UpdatedTimestamp": {
+            "$ref": "#/definitions/UpdatedTimestamp"
+        },
+        "Arn": {
+            "$ref": "#/definitions/Arn"
+        }
+    },
+    "required": [
+        "AppName",
+        "VpcId",
+        "SubnetIds",
+        "SecurityGroupIds"
+    ],
+    "readOnlyProperties": [
+        "/properties/RtbAppId",
+        "/properties/Arn",
+        "/properties/Status",
+        "/properties/RtbAppEndpoint",
+        "/properties/CreatedTimestamp",
+        "/properties/UpdatedTimestamp"
+    ],
+    "conditionalCreateOnlyProperties": [
+        "/properties/AppName",
+        "/properties/Description",
+        "/properties/VpcId",
+        "/properties/SubnetIds",
+        "/properties/SecurityGroupIds",
+        "/properties/ClientToken"
+    ],
+    "primaryIdentifier": [
+        "/properties/Arn"
+    ],
+    "additionalIdentifiers": [
+        [
+            "/properties/RtbAppId"
+        ]
+    ],
+    "handlers": {
+        "create": {
+            "permissions": [
+                "mpofxdevmu:CreateRequesterRtbApp",
+                "mpofxdevmu:GetRequesterRtbApp",
+                "mpofxdevmu:TagResource",
+                "mpofxdevmu:ListTagsForResource"
+            ]
+        },
+        "read": {
+            "permissions": [
+                "mpofxdevmu:GetRequesterRtbApp",
+                "mpofxdevmu:ListTagsForResource"
+            ]
+        },
+        "update": {
+            "permissions": [
+                "mpofxdevmu:GetRequesterRtbApp",
+                "mpofxdevmu:TagResource",
+                "mpofxdevmu:UntagResource",
+                "mpofxdevmu:ListTagsForResource"
+            ]
+        },
+        "delete": {
+            "permissions": [
+                "mpofxdevmu:DeleteRtbApp",
+                "mpofxdevmu:GetRequesterRtbApp"
+            ]
+        },
+        "list": {
+            "permissions": [
+                "mpofxdevmu:ListRtbApps"
+            ]
+        }
+    },
+    "tagging": {
+        "taggable": true,
+        "tagOnCreate": true,
+        "tagUpdatable": true,
+        "cloudFormationSystemTags": true,
+        "tagProperty": "/properties/Tags",
+        "permissions": [
+            "mpofxdevmu:TagResource",
+            "mpofxdevmu:UntagResource",
+            "mpofxdevmu:ListTagsForResource"
+        ]
+    },
+    "additionalProperties": false
+}
