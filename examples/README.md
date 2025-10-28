@@ -1,6 +1,6 @@
 # Terraform AWS RTB Fabric Examples
 
-This directory contains examples demonstrating different use cases for the RTB Fabric module.
+This directory contains examples demonstrating different use cases for the RTB Fabric module using the GA (Generally Available) API.
 
 ## Prerequisites
 
@@ -10,15 +10,7 @@ This directory contains examples demonstrating different use cases for the RTB F
 
 ## Examples
 
-### Basic Requester App
-```bash
-cd basic/
-terraform init
-terraform plan
-terraform apply
-```
-
-### Requester App with Tags
+### Requester Gateway
 ```bash
 cd requester-app/
 terraform init
@@ -26,7 +18,15 @@ terraform plan
 terraform apply
 ```
 
-### Responder App with EKS Endpoints
+### Responder Gateway - Basic
+```bash
+cd responder-app-basic/
+terraform init
+terraform plan
+terraform apply
+```
+
+### Responder Gateway with EKS Endpoints
 ```bash
 cd responder-app-eks/
 terraform init
@@ -34,7 +34,7 @@ terraform plan
 terraform apply
 ```
 
-### Responder App with Auto Scaling Groups
+### Responder Gateway with Auto Scaling Groups
 ```bash
 cd responder-app-asg/
 terraform init
@@ -58,6 +58,14 @@ terraform plan
 terraform apply
 ```
 
+### End-to-End Testing
+```bash
+cd e2e-test/
+terraform init
+terraform plan
+terraform apply
+```
+
 ## Configuration
 
 Before running any example, update the following values in the respective `main.tf` files:
@@ -65,7 +73,16 @@ Before running any example, update the following values in the respective `main.
 - `vpc_id` - Your VPC ID
 - `subnet_ids` - Your subnet IDs
 - `security_group_ids` - Your security group IDs
-- `rtb_app_id` and `peer_rtb_app_id` (for link examples) - Existing RTB app IDs
+- `rtb_app_id` and `peer_rtb_app_id` (for link examples) - Existing RTB gateway IDs (format: `rtb-gw-*`)
+
+## Key Changes in GA Version
+
+- **Resource Types**: `RequesterRtbApp` → `RequesterGateway`, `ResponderRtbApp` → `ResponderGateway`
+- **ID Format**: Gateway IDs now use `rtb-gw-*` format instead of `rtbapp-*`
+- **DNS Name**: No longer an input parameter - now read-only as `domain_name`
+- **Certificate Configuration**: `ca_certificate_chain` now maps to `trust_store_configuration`
+- **Target Groups**: `target_groups_configuration` removed - use `auto_scaling_groups_configuration` or `eks_endpoints_configuration`
+- **Link Logging**: Restructured from `service_logs`/`analytics_logs` to `application_logs`
 
 ## Cleanup
 

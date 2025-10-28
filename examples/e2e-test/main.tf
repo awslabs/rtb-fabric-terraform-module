@@ -1,15 +1,13 @@
 module "rtb_fabric" {
   source = "../../"
 
-  # Requester App
-  requester_app = {
+  # Requester Gateway
+  requester_gateway = {
     create             = true
-    app_name           = "e2e-test-requester"
-    description        = "E2E test requester app"
+    description        = "E2E test requester gateway"
     vpc_id             = "vpc-0eb82f4fa6f0aeea9"
     subnet_ids         = ["subnet-09d3b444cff7c101f", "subnet-006f0d04b2146a333", "subnet-0211339cfd40bd343"]
     security_group_ids = ["sg-03898147ca0749b4b"]
-    client_token       = "e2e-test-requester"
     tags = [
       {
         key   = "Environment"
@@ -18,26 +16,25 @@ module "rtb_fabric" {
     ]
   }
 
-  # EKS Responder App
-  responder_app = {
+  # EKS Responder Gateway
+  responder_gateway = {
     create             = true
-    app_name           = "e2e-test-responder-eks"
-    description        = "E2E test EKS responder app"
+    description        = "E2E test EKS responder gateway"
     vpc_id             = "vpc-0eb82f4fa6f0aeea9"
     subnet_ids         = ["subnet-09d3b444cff7c101f", "subnet-006f0d04b2146a333", "subnet-0211339cfd40bd343"]
     security_group_ids = ["sg-03898147ca0749b4b"]
     port               = 8080
     protocol           = "HTTP"
-    dns_name           = "e2e-eks-responder.shapirov-iad1.local"
 
     managed_endpoint_configuration = {
       eks_endpoints_configuration = {
         endpoints_resource_name      = "bidder"
         endpoints_resource_namespace = "default"
         cluster_name                 = "shapirov-iad1"
+        # eks_service_discovery_role not specified - will create default role automatically
         auto_create_access           = true
         auto_create_rbac             = true
-        cluster_access_role_arn      = "arn:aws:iam::847454263017:role/shapirov-iad1-EksAccessRole-GmCIdsAV22Pm"
+
       }
     }
 
@@ -54,17 +51,15 @@ module "rtb_fabric" {
 module "rtb_fabric_asg" {
   source = "../../"
 
-  # ASG Responder App
-  responder_app = {
+  # ASG Responder Gateway
+  responder_gateway = {
     create             = true
-    app_name           = "e2e-test-responder-asg"
-    description        = "E2E test ASG responder app"
+    description        = "E2E test ASG responder gateway"
     vpc_id             = "vpc-0eb82f4fa6f0aeea9"
     subnet_ids         = ["subnet-09d3b444cff7c101f"]
     security_group_ids = ["sg-03898147ca0749b4b"]
     port               = 8080
     protocol           = "HTTP"
-    dns_name           = "e2e-asg-responder.shapirov-iad1.local"
 
     managed_endpoint_configuration = {
       auto_scaling_groups_configuration = {
@@ -89,9 +84,18 @@ module "rtb_fabric_links" {
   # Link to EKS responder
   link = {
     create                 = true
-    rtb_app_id             = module.rtb_fabric.requester_app_id
-    peer_rtb_app_id        = module.rtb_fabric.responder_app_id
+    gateway_id             = module.rtb_fabric.requester_gateway_id
+    peer_gateway_id        = module.rtb_fabric.responder_gateway_id
     http_responder_allowed = true
+
+    link_log_settings = {
+      service_logs = {
+        link_service_log_sampling = {
+          error_log  = 10
+          filter_log = 5
+        }
+      }
+    }
 
     tags = [
       {
@@ -113,9 +117,18 @@ module "rtb_fabric_links_asg" {
   # Link to ASG responder
   link = {
     create                 = true
-    rtb_app_id             = module.rtb_fabric.requester_app_id
-    peer_rtb_app_id        = module.rtb_fabric_asg.responder_app_id
+    gateway_id             = module.rtb_fabric.requester_gateway_id
+    peer_gateway_id        = module.rtb_fabric_asg.responder_gateway_id
     http_responder_allowed = true
+
+    link_log_settings = {
+      service_logs = {
+        link_service_log_sampling = {
+          error_log  = 10
+          filter_log = 5
+        }
+      }
+    }
 
     tags = [
       {

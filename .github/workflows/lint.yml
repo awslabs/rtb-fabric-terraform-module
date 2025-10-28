@@ -21,7 +21,7 @@ jobs:
         terraform_version: ~1.0
         
     - name: Run Terraform lint
-      run: make lint
+      run: make lint-ci
       
     - name: Comment on PR (if lint fails)
       if: failure() && github.event_name == 'pull_request'

@@ -1,32 +1,36 @@
 module "rtb_fabric" {
   source = "../../"
 
-  requester_app = {
+  requester_gateway = {
     create             = true
-    app_name           = "my-requester"
-    description        = "Requester app"
+    description        = "Requester gateway"
     vpc_id             = "vpc-xxx"
     subnet_ids         = ["subnet-xxx"]
     security_group_ids = ["sg-xxx"]
-    client_token       = "token"
   }
 
-  responder_app = {
+  responder_gateway = {
     create               = true
-    app_name             = "my-responder"
-    description          = "Responder app"
+    description          = "Responder gateway"
     vpc_id               = "vpc-xxx"
     subnet_ids           = ["subnet-xxx"]
     security_group_ids   = ["sg-xxx"]
     port                 = 8080
     protocol             = "HTTPS"
-    dns_name             = "app.example.com"
-    ca_certificate_chain = "LS0tLS..."
+    ca_certificate_chain = "LS0tLS..."  # Maps to trust_store_configuration
   }
 
   link = {
     create          = true
-    rtb_app_id      = module.rtb_fabric.requester_app_id
-    peer_rtb_app_id = module.rtb_fabric.responder_app_id
+    gateway_id      = module.rtb_fabric.requester_gateway_id
+    peer_gateway_id = module.rtb_fabric.responder_gateway_id
+    link_log_settings = {
+      service_logs = {
+        link_service_log_sampling = {
+          error_log  = 10
+          filter_log = 5
+        }
+      }
+    }
   }
 }

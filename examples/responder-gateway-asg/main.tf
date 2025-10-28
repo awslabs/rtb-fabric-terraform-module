@@ -1,16 +1,14 @@
 module "rtb_fabric" {
   source = "../../"
 
-  responder_app = {
+  responder_gateway = {
     create             = true
-    app_name           = "terraform-responder-asg-test"
-    description        = "terraform responder asg test"
+    description        = "terraform responder gateway asg test"
     vpc_id             = "vpc-0eb82f4fa6f0aeea9"
     subnet_ids         = ["subnet-09d3b444cff7c101f"]
     security_group_ids = ["sg-03898147ca0749b4b"]
     port               = 31234
     protocol           = "HTTP"
-    dns_name           = "asg-app.shapirov-iad1.local"
 
     managed_endpoint_configuration = {
       auto_scaling_groups_configuration = {

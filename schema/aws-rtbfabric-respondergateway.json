@@ -1,0 +1,397 @@
+{
+    "typeName": "AWS::RTBFabric::ResponderGateway",
+    "description": "Resource Type definition for AWS::RTBFabric::ResponderGateway Resource Type",
+    "definitions": {
+        "Description": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9 ]+$"
+        },
+        "VpcId": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 5,
+            "relationshipRef": {
+                "typeName": "AWS::EC2::VPC",
+                "propertyPath": "/properties/VpcId"
+            }
+        },
+        "SubnetIds": {
+            "type": "array",
+            "description": "The ID of one or more subnets in order to create a gateway.",
+            "uniqueItems": true,
+            "insertionOrder": false,
+            "items": {
+                "type": "string",
+                "relationshipRef": {
+                    "typeName": "AWS::EC2::Subnet",
+                    "propertyPath": "/properties/SubnetId"
+                }
+            },
+            "minItems": 1
+        },
+        "SecurityGroupIds": {
+            "type": "array",
+            "description": "The ID of one or more security groups in order to create a gateway.",
+            "uniqueItems": true,
+            "insertionOrder": false,
+            "items": {
+                "type": "string",
+                "anyOf": [
+                    {
+                        "relationshipRef": {
+                            "typeName": "AWS::EC2::SecurityGroup",
+                            "propertyPath": "/properties/GroupId"
+                        }
+                    },
+                    {
+                        "relationshipRef": {
+                            "typeName": "AWS::EC2::SecurityGroup",
+                            "propertyPath": "/properties/Id"
+                        }
+                    }
+                ]
+            },
+            "minItems": 1
+        },
+        "GatewayId": {
+            "type": "string",
+            "pattern": "^(rtbapp-[a-z0-9-]{1,25}|rtb-gw-[a-z0-9-]{1,25})$"
+        },
+        "DomainName": {
+            "type": "string",
+            "pattern": "^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))+$"
+
+        },
+        "ResponderGatewayStatus": {
+            "type": "string",
+            "enum": [
+                "PENDING_CREATION",
+                "ACTIVE",
+                "PENDING_DELETION",
+                "DELETED",
+                "ERROR",
+                "PENDING_UPDATE",
+                "ISOLATED",
+                "PENDING_ISOLATION",
+                "PENDING_RESTORATION"
+            ]
+        },
+        "CreatedTimestamp": {
+            "type": "string"
+        },
+        "UpdatedTimestamp": {
+            "type": "string"
+        },
+        "Arn": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 20,
+            "pattern": "^arn:aws:(rtbfabric|rtbfabric):[a-zA-Z0-9_-]+:[0-9]{12}:gateway/[a-zA-Z0-9-]+$"
+        },
+        "Port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+        },
+        "Protocol": {
+            "type": "string",
+            "enum": [
+                "HTTP",
+                "HTTPS"
+            ]
+        },
+        "Base64EncodedCertificateChain": {
+            "type": "string",
+            "maxLength": 2097152,
+            "minLength": 1
+        },
+        "CertificateAuthorityCertificates": {
+            "type": "array",
+            "uniqueItems": true,
+            "insertionOrder": false,
+            "items": {
+                "$ref": "#/definitions/Base64EncodedCertificateChain"
+            },
+            "minItems": 0,
+            "maxItems": 1
+        },
+        "TrustStoreConfiguration": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "CertificateAuthorityCertificates": {
+                    "$ref": "#/definitions/CertificateAuthorityCertificates"
+                }
+            },
+            "required": [
+                "CertificateAuthorityCertificates"
+            ]
+        },
+        "ActiveLinksCount": {
+            "type": "integer"
+        },
+        "TotalLinksCount": {
+            "type": "integer"
+        },
+        "InboundLinksCount": {
+            "type": "integer"
+        },
+        "AutoScalingGroupNameList": {
+            "type": "array",
+            "uniqueItems": true,
+            "insertionOrder": false,
+            "items": {
+                "type": "string"
+            }
+        },
+        "AutoScalingGroupsConfiguration": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "AutoScalingGroupNameList": {
+                    "$ref": "#/definitions/AutoScalingGroupNameList"
+                },
+                "RoleArn": {
+                    "type": "string",
+                    "relationshipRef": {
+                        "typeName": "AWS::IAM::Role",
+                        "propertyPath": "/properties/Arn"
+                    }
+                }
+            },
+            "required": [
+                "AutoScalingGroupNameList",
+                "RoleArn"
+            ]
+        },
+        "EksEndpointsConfiguration": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "EndpointsResourceName": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,61}[A-Za-z0-9]$"
+                },
+                "EndpointsResourceNamespace": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,61}[A-Za-z0-9]$"
+                },
+                "ClusterApiServerEndpointUri": {
+                    "type": "string",
+                    "pattern": "^(https|http)://(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))+$",
+                    "minLength": 0,
+                    "maxLength": 255
+                },
+                "ClusterApiServerCaCertificateChain": {
+                    "type": "string",
+                    "maxLength": 2097152,
+                    "minLength": 1
+                },
+                "ClusterName": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,61}[A-Za-z0-9]$"
+                },
+                "RoleArn": {
+                    "type": "string",
+                    "relationshipRef": {
+                        "typeName": "AWS::IAM::Role",
+                        "propertyPath": "/properties/Arn"
+                    }
+                }
+            },
+            "required": [
+                "EndpointsResourceName",
+                "EndpointsResourceNamespace",
+                "ClusterApiServerEndpointUri",
+                "ClusterApiServerCaCertificateChain",
+                "ClusterName",
+                "RoleArn"
+            ]
+        },
+        "ManagedEndpointConfiguration": {
+            "type": "object",
+            "oneOf": [
+                {
+                    "properties": {
+                        "AutoScalingGroupsConfiguration": {
+                            "$ref": "#/definitions/AutoScalingGroupsConfiguration"
+                        }
+                    },
+                    "required": ["AutoScalingGroupsConfiguration"],
+                    "additionalProperties": false
+                },
+                {
+                    "properties": {
+                        "EksEndpointsConfiguration": {
+                            "$ref": "#/definitions/EksEndpointsConfiguration"
+                        }
+                    },
+                    "required": ["EksEndpointsConfiguration"],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "Tag": {
+            "description": "A key-value pair to associate with a resource.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "Key": {
+                    "type": "string",
+                    "description": "The key name of the tag. You can specify a value that is 1 to 128 Unicode characters in length and cannot be prefixed with aws:. You can use any of the following characters: the set of Unicode letters, digits, whitespace, _, ., /, =, +, and -. ",
+                    "minLength": 1,
+                    "maxLength": 128
+                },
+                "Value": {
+                    "type": "string",
+                    "description": "The value for the tag. You can specify a value that is 0 to 256 Unicode characters in length and cannot be prefixed with aws:. You can use any of the following characters: the set of Unicode letters, digits, whitespace, _, ., /, =, +, and -. ",
+                    "minLength": 0,
+                    "maxLength": 256
+                }
+            },
+            "required": [
+                "Key"
+            ]
+        },
+        "Tags": {
+            "type": "array",
+            "insertionOrder": false,
+            "uniqueItems": true,
+            "items": {
+                "$ref": "#/definitions/Tag"
+            },
+            "minItems": 0,
+            "maxItems": 50,
+            "description": "Tags to assign to the Responder Gateway."
+        }
+    },
+    "properties": {
+        "Tags": {
+            "$ref": "#/definitions/Tags"
+        },
+        "Description": {
+            "$ref": "#/definitions/Description"
+        },
+        "VpcId": {
+            "$ref": "#/definitions/VpcId"
+        },
+        "SubnetIds": {
+            "$ref": "#/definitions/SubnetIds"
+        },
+        "SecurityGroupIds": {
+            "$ref": "#/definitions/SecurityGroupIds"
+        },
+        "GatewayId": {
+            "$ref": "#/definitions/GatewayId"
+        },
+        "ResponderGatewayStatus": {
+            "$ref": "#/definitions/ResponderGatewayStatus"
+        },
+        "CreatedTimestamp": {
+            "$ref": "#/definitions/CreatedTimestamp"
+        },
+        "UpdatedTimestamp": {
+            "$ref": "#/definitions/UpdatedTimestamp"
+        },
+        "Arn": {
+            "$ref": "#/definitions/Arn"
+        },
+        "Port": {
+            "$ref": "#/definitions/Port"
+        },
+        "Protocol": {
+            "$ref": "#/definitions/Protocol"
+        },
+        "DomainName": {
+            "$ref": "#/definitions/DomainName"
+        },
+        "TrustStoreConfiguration": {
+            "$ref": "#/definitions/TrustStoreConfiguration"
+        },
+        "ManagedEndpointConfiguration": {
+            "$ref": "#/definitions/ManagedEndpointConfiguration"
+        }
+    },
+    "required": [
+        "VpcId",
+        "SubnetIds",
+        "SecurityGroupIds",
+        "Port",
+        "Protocol"
+    ],
+    "readOnlyProperties": [
+        "/properties/GatewayId",
+        "/properties/Arn",
+        "/properties/ResponderGatewayStatus",
+        "/properties/CreatedTimestamp",
+        "/properties/UpdatedTimestamp"
+    ],
+    "conditionalCreateOnlyProperties": [
+        "/properties/Description",
+        "/properties/VpcId",
+        "/properties/SubnetIds",
+        "/properties/SecurityGroupIds",
+        "/properties/Port",
+        "/properties/Protocol",
+        "/properties/DomainName",
+        "/properties/TrustStoreConfiguration",
+        "/properties/ManagedEndpointConfiguration"
+    ],
+    "primaryIdentifier": [
+        "/properties/Arn"
+    ],
+    "additionalIdentifiers": [
+        [
+            "/properties/GatewayId"
+        ]
+    ],
+    "handlers": {
+        "create": {
+            "permissions": [
+                "rtbfabric:CreateResponderGateway",
+                "rtbfabric:GetResponderGateway",
+                "rtbfabric:TagResource",
+                "rtbfabric:ListTagsForResource",
+                "iam:CreateServiceLinkedRole"
+            ]
+        },
+        "read": {
+            "permissions": [
+                "rtbfabric:GetResponderGateway",
+                "rtbfabric:ListTagsForResource"
+            ]
+        },
+        "update": {
+            "permissions": [
+                "rtbfabric:GetResponderGateway",
+                "rtbfabric:TagResource",
+                "rtbfabric:UntagResource",
+                "rtbfabric:ListTagsForResource"
+            ]
+        },
+        "delete": {
+            "permissions": [
+                "rtbfabric:DeleteResponderGateway",
+                "rtbfabric:GetResponderGateway"
+            ]
+        },
+        "list": {
+            "permissions": [
+                "rtbfabric:ListResponderGateways"
+            ]
+        }
+    },
+    "tagging": {
+        "taggable": true,
+        "tagOnCreate": true,
+        "tagUpdatable": true,
+        "cloudFormationSystemTags": false,
+        "tagProperty": "/properties/Tags",
+        "permissions": [
+            "rtbfabric:TagResource",
+            "rtbfabric:UntagResource",
+            "rtbfabric:ListTagsForResource"
+        ]
+    },
+    "additionalProperties": false
+}

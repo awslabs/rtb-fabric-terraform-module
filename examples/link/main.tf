@@ -3,8 +3,8 @@ module "rtb_fabric" {
 
   link = {
     create                 = true
-    rtb_app_id             = "rtbapp-abc123"
-    peer_rtb_app_id        = "rtbapp-def456"
+    gateway_id             = "rtb-gw-abc123"
+    peer_gateway_id        = "rtb-gw-def456"
     http_responder_allowed = true
 
     link_attributes = {
@@ -19,6 +19,7 @@ module "rtb_fabric" {
       ]
     }
 
+    # Updated logging structure for GA schema
     link_log_settings = {
       service_logs = {
         link_service_log_sampling = {
@@ -26,12 +27,23 @@ module "rtb_fabric" {
           filter_log = 50
         }
       }
-      analytics_logs = {
-        link_analytics_log_sampling = {
-          bid_log = 25
+      # analytics_logs removed in GA schema - only application_logs supported
+    }
+
+    # Example of new ModuleConfigurationList feature
+    module_configuration_list = [
+      {
+        name    = "NoBidModule"
+        version = "v1"
+        module_parameters = {
+          no_bid = {
+            reason                  = "TestReason"
+            reason_code             = 1
+            pass_through_percentage = 10.0
+          }
         }
       }
-    }
+    ]
 
     tags = [
       {

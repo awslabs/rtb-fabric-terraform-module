@@ -1,24 +1,36 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'RTB Fabric Requester App CloudFormation Template'
+Description: 'RTB Fabric Requester Gateway CloudFormation Template'
 
 Resources:
-  RequesterRtbAppGamma:
-    Type: AWS::RTBFabric::RequesterRtbApp
+  RequesterGatewayGamma:
+    Type: AWS::RTBFabric::RequesterGateway
     Properties:
-      AppName: requester-rtb-app-gamma
-      Description: cfn test requester
+      Description: cfn test requester gateway
       VpcId: vpc-04b494ac39886a9cd
       SubnetIds: [subnet-0b81b847b26b34bdc, subnet-04e9cc18323490792]
       SecurityGroupIds: [sg-0e3ede381252b8c74]
-      ClientToken: testclienttoken
+      # ClientToken removed in GA schema
       Tags:
-        - Key: rtb-app-gamma-key1
-          Value: rtb-app-gamma-value1
+        - Key: rtb-gateway-gamma-key1
+          Value: rtb-gateway-gamma-value1
 
 Outputs:
+  RequesterGatewayId:
+    Description: 'ID of the created requester RTB gateway'
+    Value: !GetAtt RequesterGatewayGamma.GatewayId
+  RequesterGatewayArn:
+    Description: 'ARN of the created requester RTB gateway'
+    Value: !GetAtt RequesterGatewayGamma.Arn
+  RequesterDomainName:
+    Description: 'Domain name of the created requester RTB gateway'
+    Value: !GetAtt RequesterGatewayGamma.DomainName
+  RequesterGatewayStatus:
+    Description: 'Status of the created requester RTB gateway'
+    Value: !GetAtt RequesterGatewayGamma.RequesterGatewayStatus
+  # Legacy output names for backward compatibility
   RequesterAppId:
-    Description: 'ID of the created requester RTB application'
-    Value: !Ref RequesterRtbAppGamma
+    Description: 'ID of the created requester RTB application (legacy name)'
+    Value: !GetAtt RequesterGatewayGamma.GatewayId
   RequesterAppArn:
-    Description: 'ARN of the created requester RTB application'
-    Value: !GetAtt RequesterRtbAppGamma.Arn
+    Description: 'ARN of the created requester RTB application (legacy name)'
+    Value: !GetAtt RequesterGatewayGamma.Arn

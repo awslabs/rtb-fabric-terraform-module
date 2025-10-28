@@ -1,6 +1,6 @@
 # Complete RTB Fabric Setup Example
 
-Creates a complete RTB Fabric setup with requester app, responder app, and a link connecting them.
+Creates a complete RTB Fabric setup with requester gateway, responder gateway, and a link connecting them using the GA API.
 
 ## Usage
 
@@ -14,10 +14,18 @@ terraform apply
 
 ## Resources Created
 
-- 1 RTB Fabric Requester App
-- 1 RTB Fabric Responder App  
-- 1 RTB Fabric Link connecting the apps
+- 1 RTB Fabric Requester Gateway
+- 1 RTB Fabric Responder Gateway
+- 1 RTB Fabric Link connecting the gateways
 
-## Note
+## Key Features
 
-The link uses module outputs to automatically reference the created apps.
+- Uses GA API resource types (`RequesterGateway`, `ResponderGateway`)
+- Demonstrates proper link log settings configuration
+- The link uses module outputs to automatically reference the created gateways
+- Shows certificate configuration using `trust_store_configuration`
+
+## Outputs
+
+- Gateway IDs, ARNs, and domain names
+- Link status and metadata

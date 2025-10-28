@@ -1,5 +1,5 @@
 # RTB Fabric Module
 # Resources are defined in separate files:
-# - requester_app.tf
-# - responder_app.tf  
-# - link.tf
+# - requester.tf (RequesterGateway)
+# - responder.tf (ResponderGateway)
+# - link.tf (Link with GA schema)

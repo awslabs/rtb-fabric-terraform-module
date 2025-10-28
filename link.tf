@@ -5,14 +5,33 @@ resource "aws_cloudcontrolapi_resource" "link" {
 
   desired_state = jsonencode(merge(
     {
-      RtbAppId     = var.link.rtb_app_id
-      PeerRtbAppId = var.link.peer_rtb_app_id
-      Tags = [for tag in var.link.tags : {
+      # Required fields - must not be null
+      GatewayId     = var.link.gateway_id
+      PeerGatewayId = var.link.peer_gateway_id
+      # LinkLogSettings is required in GA schema
+      LinkLogSettings = var.link.link_log_settings != null ? {
+        ApplicationLogs = {
+          LinkApplicationLogSampling = {
+            ErrorLog  = var.link.link_log_settings.service_logs != null ? var.link.link_log_settings.service_logs.link_service_log_sampling.error_log : 0
+            FilterLog = var.link.link_log_settings.service_logs != null ? var.link.link_log_settings.service_logs.link_service_log_sampling.filter_log : 0
+          }
+        }
+      } : {
+        ApplicationLogs = {
+          LinkApplicationLogSampling = {
+            ErrorLog  = 0
+            FilterLog = 0
+          }
+        }
+      }
+      Tags = var.link.tags != null ? [for tag in var.link.tags : {
         Key   = tag.key
         Value = tag.value
-      }]
+      }] : []
     },
+    # HttpResponderAllowed (write-only in GA schema)
     var.link.http_responder_allowed != null ? { HttpResponderAllowed = var.link.http_responder_allowed } : {},
+    # LinkAttributes
     var.link.link_attributes != null ? {
       LinkAttributes = merge(
         var.link.link_attributes.customer_provided_id != null ? { CustomerProvidedId = var.link.link_attributes.customer_provided_id } : {},
@@ -26,24 +45,7 @@ resource "aws_cloudcontrolapi_resource" "link" {
         } : {}
       )
     } : {},
-    var.link.link_log_settings != null ? {
-      LinkLogSettings = merge(
-        var.link.link_log_settings.service_logs != null ? {
-          ServiceLogs = {
-            LinkServiceLogSampling = {
-              ErrorLog  = var.link.link_log_settings.service_logs.link_service_log_sampling.error_log
-              FilterLog = var.link.link_log_settings.service_logs.link_service_log_sampling.filter_log
-            }
-          }
-        } : {},
-        var.link.link_log_settings.analytics_logs != null ? {
-          AnalyticsLogs = {
-            LinkAnalyticsLogSampling = {
-              BidLog = var.link.link_log_settings.analytics_logs.link_analytics_log_sampling.bid_log
-            }
-          }
-        } : {}
-      )
-    } : {}
+    # Support for new ModuleConfigurationList
+    var.link.module_configuration_list != null ? { ModuleConfigurationList = var.link.module_configuration_list } : {}
   ))
 }

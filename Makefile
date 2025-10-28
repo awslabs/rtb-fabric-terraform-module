@@ -1,4 +1,4 @@
-.PHONY: deploy destroy e2e-test clean lint format fmt-diff
+.PHONY: deploy destroy e2e-test clean lint format fmt-diff lint-ci
 
 # Default AWS profile
 AWS_PROFILE ?= shapirov+2-Admin
@@ -43,7 +43,7 @@ lint:
 	fi
 	@echo "✅ Formatting check passed"
 	@echo "🔧 Initializing Terraform..."
-	@terraform init -backend=false > /dev/null 2>&1
+	@terraform init -backend=false
 	@terraform validate
 	@echo "✅ Validation check passed"
 
@@ -55,6 +55,17 @@ format:
 fmt-diff:
 	@echo "🔍 Showing formatting changes needed..."
 	@terraform fmt -diff -recursive
+
+lint-ci:
+	@echo "🔍 Running Terraform code quality checks (CI mode)..."
+	@if ! terraform fmt -check -recursive; then \
+		echo "❌ Formatting issues found. Here are the changes needed:"; \
+		terraform fmt -diff -recursive; \
+		echo "Run 'make format' to fix these issues."; \
+		exit 1; \
+	fi
+	@echo "✅ Formatting check passed"
+	@echo "ℹ️ Skipping validation in CI (no AWS credentials needed)"
 
 help:
 	@echo "Available targets:"
