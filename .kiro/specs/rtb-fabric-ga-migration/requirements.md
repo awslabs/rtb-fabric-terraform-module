@@ -87,3 +87,15 @@ This document outlines the requirements for migrating the AWS RTB Fabric Terrafo
 3. WHEN implementing ResponderGateway, THE RTB_Fabric_Module SHALL support TrustStoreConfiguration with CertificateAuthorityCertificates
 4. WHEN implementing Link resource, THE RTB_Fabric_Module SHALL support ModuleConfigurationList for advanced link configuration
 5. WHEN preserving EKS enhancements, THE RTB_Fabric_Module SHALL maintain automatic RBAC and access features for EKS endpoints configuration
+
+### Requirement 7
+
+**User Story:** As a Terraform module user, I want the module to strictly comply with the GA schema validation rules, so that all resources are created correctly and no legacy attributes remain.
+
+#### Acceptance Criteria
+
+1. WHEN validating Link variables, THE RTB_Fabric_Module SHALL remove all legacy service_logs and analytics_logs references and use only ApplicationLogs structure
+2. WHEN validating ModuleConfigurationList, THE RTB_Fabric_Module SHALL use exact GA schema property names with PascalCase (NoBid, OpenRtbAttribute)
+3. WHEN validating LinkLogSettings, THE RTB_Fabric_Module SHALL enforce required ApplicationLogs.LinkApplicationLogSampling with ErrorLog and FilterLog fields
+4. WHEN validating module parameters, THE RTB_Fabric_Module SHALL add comprehensive validation rules for all ModuleConfigurationList constraints
+5. WHEN removing legacy references, THE RTB_Fabric_Module SHALL ensure no RtbApp, mpofxdevmu, or other legacy API references remain in any files

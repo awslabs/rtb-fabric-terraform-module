@@ -12,8 +12,8 @@ resource "aws_cloudcontrolapi_resource" "link" {
       LinkLogSettings = var.link.link_log_settings != null ? {
         ApplicationLogs = {
           LinkApplicationLogSampling = {
-            ErrorLog  = var.link.link_log_settings.service_logs != null ? var.link.link_log_settings.service_logs.link_service_log_sampling.error_log : 0
-            FilterLog = var.link.link_log_settings.service_logs != null ? var.link.link_log_settings.service_logs.link_service_log_sampling.filter_log : 0
+            ErrorLog  = var.link.link_log_settings.application_logs.link_application_log_sampling.error_log
+            FilterLog = var.link.link_log_settings.application_logs.link_application_log_sampling.filter_log
           }
         }
       } : {
@@ -45,7 +45,49 @@ resource "aws_cloudcontrolapi_resource" "link" {
         } : {}
       )
     } : {},
-    # Support for new ModuleConfigurationList
-    var.link.module_configuration_list != null ? { ModuleConfigurationList = var.link.module_configuration_list } : {}
+    # Support for new ModuleConfigurationList with GA schema structure
+    var.link.module_configuration_list != null ? { 
+      ModuleConfigurationList = [for module in var.link.module_configuration_list : merge(
+        {
+          Name = module.name
+        },
+        module.version != null ? { Version = module.version } : {},
+        module.depends_on != null ? { DependsOn = module.depends_on } : {},
+        # Build ModuleParameters based on module_type (oneOf constraint)
+        module.module_type == "NoBid" && module.no_bid_parameters != null ? {
+          ModuleParameters = {
+            NoBid = merge(
+              module.no_bid_parameters.reason != null ? { Reason = module.no_bid_parameters.reason } : {},
+              module.no_bid_parameters.reason_code != null ? { ReasonCode = module.no_bid_parameters.reason_code } : {},
+              module.no_bid_parameters.pass_through_percentage != null ? { PassThroughPercentage = module.no_bid_parameters.pass_through_percentage } : {}
+            )
+          }
+        } : {},
+        module.module_type == "OpenRtbAttribute" && module.open_rtb_attribute_parameters != null ? {
+          ModuleParameters = {
+            OpenRtbAttribute = {
+              FilterType = module.open_rtb_attribute_parameters.filter_type
+              FilterConfiguration = [for filter in module.open_rtb_attribute_parameters.filter_configuration : {
+                Criteria = [for criterion in filter.criteria : {
+                  Path   = criterion.path
+                  Values = criterion.values
+                }]
+              }]
+              Action = module.open_rtb_attribute_parameters.action_type == "NoBid" && module.open_rtb_attribute_parameters.no_bid_action != null ? {
+                NoBid = merge(
+                  module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code != null ? { NoBidReasonCode = module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code } : {}
+                )
+              } : module.open_rtb_attribute_parameters.action_type == "HeaderTag" && module.open_rtb_attribute_parameters.header_tag_action != null ? {
+                HeaderTag = {
+                  Name  = module.open_rtb_attribute_parameters.header_tag_action.name
+                  Value = module.open_rtb_attribute_parameters.header_tag_action.value
+                }
+              } : {}
+              HoldbackPercentage = module.open_rtb_attribute_parameters.holdback_percentage
+            }
+          }
+        } : {}
+      )]
+    } : {}
   ))
 }

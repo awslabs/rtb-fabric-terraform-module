@@ -9,7 +9,7 @@ spec:
   type: LoadBalancer
   ports:
   - port: 8080
-    targetPort: 8080
+    targetPort: 8090
     nodePort: 31234 
   selector:
     app: bidder

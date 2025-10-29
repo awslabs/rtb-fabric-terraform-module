@@ -1,0 +1,49 @@
+---
+# Checkov configuration
+framework:
+  - terraform
+  - secrets
+
+# Only run MEDIUM, HIGH, and CRITICAL severity checks
+check:
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Skip checks that don't apply to this module or are too restrictive for examples
+skip-check:
+  # Skip S3 related checks as this module doesn't create S3 buckets
+  - CKV_AWS_18  # S3 bucket should have access logging configured
+  - CKV_AWS_21  # S3 bucket should have versioning enabled
+  - CKV_AWS_144 # S3 bucket should have cross-region replication enabled
+  - CKV_AWS_145 # S3 bucket should have KMS encryption enabled
+  
+  # Skip overly restrictive networking checks for examples
+  - CKV_AWS_23  # Security group rules should not allow 0.0.0.0/0 ingress
+  - CKV_AWS_25  # Security group rules should not allow all outbound traffic
+  
+  # Skip IAM checks that are too restrictive for service roles
+  - CKV_AWS_62  # IAM role should not have overly permissive policies
+  - CKV_AWS_107 # IAM policy should not allow * action
+  - CKV_AWS_108 # IAM policy should not allow * resource
+  - CKV_AWS_109 # IAM policy should not allow * resource with PassRole
+  - CKV_AWS_110 # IAM policy should not allow * resource with * action
+  - CKV_AWS_111 # IAM write policy should not allow * resource
+  
+  # Skip EKS checks that don't apply to our use case
+  - CKV_AWS_37  # EKS cluster should have control plane logging enabled
+  - CKV_AWS_38  # EKS cluster should have secrets encryption enabled
+  - CKV_AWS_39  # EKS cluster should have public access disabled
+  - CKV_AWS_58  # EKS cluster should have API server endpoint access CIDRs configured
+
+# Output format: cli, json, junitxml, github_failed_only, sarif
+output: cli
+
+# Download external modules for scanning
+download-external-modules: true
+
+# Compact output format
+compact: false
+
+# Include passed checks in output
+include-all-checkov-policies: false

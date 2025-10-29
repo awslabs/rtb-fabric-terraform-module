@@ -1,0 +1,30 @@
+---
+# TFSec configuration
+severity_overrides:
+  # Allow some common patterns in examples
+  aws-ec2-no-public-ingress-sgr: LOW
+  aws-ec2-no-public-egress-sgr: LOW
+
+exclude:
+  # Skip checks that don't apply to this module
+  - aws-s3-enable-bucket-encryption
+  - aws-s3-enable-bucket-logging
+  - aws-s3-enable-versioning
+  
+  # Allow examples to have simplified configurations
+  - aws-iam-no-policy-wildcards  # Examples may use wildcards for simplicity
+
+# Custom checks configuration
+checks:
+  - aws-*
+  - general-*
+
+# Output format options: default, json, csv, checkstyle, junit, sarif
+format: default
+
+# Include additional metadata in output
+include-ignored: false
+include-passed: false
+
+# Minimum severity to report: CRITICAL, HIGH, MEDIUM, LOW
+minimum-severity: MEDIUM

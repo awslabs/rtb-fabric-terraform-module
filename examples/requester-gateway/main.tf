@@ -2,7 +2,7 @@
 variable "cluster_name" {
   description = "Name of the EKS cluster to discover VPC and networking resources from"
   type        = string
-  default     = "rtbkit-shapirov-iad"
+  default     = "publisher-eks"
 }
 
 # Use shared EKS cluster discovery logic

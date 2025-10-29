@@ -118,9 +118,38 @@
   - Update any remaining legacy references in documentation
   - _Requirements: 2.1, 2.2_
 
-- [ ]* 7. Validate implementation with comprehensive testing
-  - Test all examples for successful plan and apply operations
-  - Validate resource creation and attribute mapping
-  - Test EKS integration preservation
-  - Verify new GA features functionality
-  - _Requirements: 5.4, 6.5_
+- [ ] 7. Fix schema validation and compliance issues
+  - Fix Link variable structure to match GA schema exactly
+  - Remove legacy service_logs and analytics_logs references
+  - Update ModuleConfigurationList to use PascalCase property names
+  - Add comprehensive validation rules for all schema constraints
+  - Remove any remaining legacy references (RtbApp, mpofxdevmu)
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+
+- [ ] 7.1 Fix Link variable structure for GA schema compliance
+  - Remove service_logs and analytics_logs from link_log_settings variable
+  - Update to use only ApplicationLogs structure matching GA schema
+  - Make LinkLogSettings required with proper defaults
+  - Update link.tf implementation to handle new structure correctly
+  - _Requirements: 7.1_
+
+- [ ] 7.2 Fix ModuleConfigurationList schema compliance
+  - Update module_parameters to use PascalCase (NoBid, OpenRtbAttribute)
+  - Fix nested property names to match GA schema exactly
+  - Add proper oneOf validation for ModuleParameters
+  - Update example to demonstrate correct usage
+  - _Requirements: 7.2_
+
+- [ ] 7.3 Add comprehensive validation rules
+  - Add validation for LinkLogSettings required fields
+  - Add validation for ModuleConfigurationList structure constraints
+  - Add validation for all GA schema patterns and enums
+  - Add validation for required vs optional fields
+  - _Requirements: 7.3, 7.4_
+
+- [ ] 7.4 Remove all legacy references
+  - Search and remove any remaining RtbApp references
+  - Remove any mpofxdevmu service references
+  - Update any legacy property names or patterns
+  - Ensure complete migration to GA terminology
+  - _Requirements: 7.5_

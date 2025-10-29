@@ -1,4 +1,4 @@
-.PHONY: deploy destroy e2e-test clean lint format fmt-diff lint-ci
+.PHONY: deploy destroy e2e-test clean lint format fmt-diff lint-ci security tflint tfsec checkov install-tools
 
 # Default AWS profile
 AWS_PROFILE ?= shapirov+2-Admin
@@ -67,16 +67,73 @@ lint-ci:
 	@echo "✅ Formatting check passed"
 	@echo "ℹ️ Skipping validation in CI (no AWS credentials needed)"
 
+install-tools:
+	@echo "🔧 Installing security and quality tools..."
+	@echo "Installing TFLint..."
+	@if command -v brew >/dev/null 2>&1; then \
+		brew install tflint; \
+	else \
+		curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash; \
+	fi
+	@echo "Installing TFSec..."
+	@if command -v brew >/dev/null 2>&1; then \
+		brew install tfsec; \
+	else \
+		curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash; \
+	fi
+	@echo "Installing Checkov..."
+	@if command -v pip3 >/dev/null 2>&1; then \
+		pip3 install checkov; \
+	elif command -v pip >/dev/null 2>&1; then \
+		pip install checkov; \
+	else \
+		echo "❌ Python pip not found. Please install Python and pip first."; \
+		exit 1; \
+	fi
+	@echo "✅ All tools installed successfully!"
+
+tflint:
+	@echo "🔍 Running TFLint..."
+	@tflint --init
+	@tflint --config .tflint.hcl
+	@echo "✅ TFLint check completed"
+
+tfsec:
+	@echo "🔒 Running TFSec security scan..."
+	@tfsec . --config-file .tfsec.yml
+	@echo "✅ TFSec scan completed"
+
+checkov:
+	@echo "🛡️ Running Checkov compliance scan..."
+	@checkov -d . --config-file .checkov.yml --compact
+	@echo "✅ Checkov scan completed"
+
+security: tfsec checkov
+	@echo "🔐 Security scans completed!"
+
 help:
 	@echo "Available targets:"
-	@echo "  deploy    - Deploy all RTB Fabric resources"
-	@echo "  destroy   - Destroy all RTB Fabric resources"
-	@echo "  e2e-test  - Run full end-to-end test (deploy + destroy)"
-	@echo "  lint      - Run code quality checks (format + validate)"
-	@echo "  format    - Format all Terraform code"
-	@echo "  fmt-diff  - Show what formatting changes are needed"
-	@echo "  clean     - Clean Terraform state and cache files"
-	@echo "  help      - Show this help message"
+	@echo ""
+	@echo "🚀 Deployment:"
+	@echo "  deploy       - Deploy all RTB Fabric resources"
+	@echo "  destroy      - Destroy all RTB Fabric resources"
+	@echo "  e2e-test     - Run full end-to-end test (deploy + destroy)"
+	@echo ""
+	@echo "🔍 Code Quality:"
+	@echo "  lint         - Run code quality checks (format + validate)"
+	@echo "  format       - Format all Terraform code"
+	@echo "  fmt-diff     - Show what formatting changes are needed"
+	@echo "  tflint       - Run TFLint for Terraform best practices"
+	@echo ""
+	@echo "🔒 Security:"
+	@echo "  security     - Run all security scans (tfsec + checkov)"
+	@echo "  tfsec        - Run TFSec security scanner"
+	@echo "  checkov      - Run Checkov compliance scanner"
+	@echo ""
+	@echo "🔧 Setup:"
+	@echo "  install-tools - Install all security and quality tools"
+	@echo "  clean        - Clean Terraform state and cache files"
+	@echo "  help         - Show this help message"
 	@echo ""
 	@echo "Environment variables:"
 	@echo "  AWS_PROFILE - AWS profile to use (default: shapirov+2-Admin)"

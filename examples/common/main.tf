@@ -24,7 +24,6 @@ data "aws_subnets" "cluster_subnets" {
   }
 
   tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "*" # Matches both "owned" and "shared"
     "kubernetes.io/role/internal-elb"           = "1" # Private subnets for internal load balancers
   }
 }

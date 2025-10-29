@@ -17,7 +17,7 @@ module "rtb_fabric" {
     security_group_ids   = ["sg-xxx"]
     port                 = 8080
     protocol             = "HTTPS"
-    ca_certificate_chain = "LS0tLS..."  # Maps to trust_store_configuration
+    ca_certificate_chain = "LS0tLS..." # Maps to trust_store_configuration
   }
 
   link = {

@@ -20,36 +20,29 @@ resource "aws_cloudcontrolapi_resource" "responder_gateway" {
     var.responder_gateway.description != null ? {
       Description = var.responder_gateway.description
     } : {},
+    # Include DomainName if provided
+    var.responder_gateway.domain_name != null ? {
+      DomainName = var.responder_gateway.domain_name
+    } : {},
     # Include TrustStoreConfiguration if provided
     var.responder_gateway.trust_store_configuration != null ? {
       TrustStoreConfiguration = {
         CertificateAuthorityCertificates = var.responder_gateway.trust_store_configuration.certificate_authority_certificates
       }
     } : {},
-    # ManagedEndpointConfiguration - removed TargetGroupsConfiguration support
-    var.responder_gateway.managed_endpoint_configuration != null ? {
-      ManagedEndpointConfiguration = var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration != null ? {
-        AutoScalingGroupsConfiguration = {
-          AutoScalingGroupNameList = var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.auto_scaling_group_name_list
-          RoleArn                  = var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.role_arn
-        }
-        } : var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null ? {
-        EksEndpointsConfiguration = {
-          EndpointsResourceName              = var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.endpoints_resource_name
-          EndpointsResourceNamespace         = var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.endpoints_resource_namespace
-          ClusterApiServerEndpointUri        = var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_api_server_endpoint_uri != null ? var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_api_server_endpoint_uri : data.aws_eks_cluster.cluster[0].endpoint
-          ClusterApiServerCaCertificateChain = var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_api_server_ca_certificate_chain != null ? var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_api_server_ca_certificate_chain : data.aws_eks_cluster.cluster[0].certificate_authority[0].data
-          ClusterName                        = var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_name
-          RoleArn                            = local.eks_service_discovery_role_arn
-        }
-      } : {}
+    # ManagedEndpointConfiguration - computed in locals to avoid conditional type issues
+    length(keys(local.managed_endpoint_configuration)) > 0 ? {
+      ManagedEndpointConfiguration = local.managed_endpoint_configuration
     } : {}
   ))
 
-  # Ensure EKS resources are created before the gateway
+  # Ensure required resources are created before the gateway
+  # All potential dependencies are listed - Terraform automatically handles conditional resources
   depends_on = [
     aws_iam_role.eks_service_discovery_role,
     aws_iam_role_policy.eks_service_discovery_role_policy,
+    aws_iam_role.asg_service_discovery_role,
+    aws_iam_role_policy.asg_service_discovery_role_policy,
     aws_eks_access_entry.rtbfabric,
     kubernetes_role.rtbfabric_endpoint_reader,
     kubernetes_role_binding.rtbfabric_endpoint_reader

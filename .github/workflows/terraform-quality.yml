@@ -1,0 +1,149 @@
+name: Terraform Quality & Security
+
+on:
+  # Run on PRs to main branch
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+      - '.tflint.hcl'
+      - '.tfsec.yml'
+      - '.checkov.yml'
+      - '.github/workflows/terraform-quality.yml'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      scan_level:
+        description: 'Scan level'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - 'full'
+          - 'security-only'
+          - 'lint-only'
+
+jobs:
+  terraform-quality:
+    name: Terraform Quality & Security Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.6
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Show Format Diff
+        if: steps.fmt.outcome == 'failure'
+        run: |
+          echo "::error::Terraform files are not properly formatted"
+          terraform fmt -diff -recursive
+
+      - name: Terraform Init (for validation)
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Setup TFLint
+        if: github.event.inputs.scan_level != 'security-only'
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.50.3
+
+      - name: Initialize TFLint
+        if: github.event.inputs.scan_level != 'security-only'
+        run: tflint --init
+
+      - name: Run TFLint
+        if: github.event.inputs.scan_level != 'security-only'
+        run: tflint --format compact
+
+      - name: Setup TFSec
+        if: github.event.inputs.scan_level != 'lint-only'
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          version: latest
+          soft_fail: false
+          format: default
+          additional_args: --config-file .tfsec.yml
+
+      - name: Setup Python for Checkov
+        if: github.event.inputs.scan_level != 'lint-only'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Checkov
+        if: github.event.inputs.scan_level != 'lint-only'
+        run: pip install checkov
+
+      - name: Run Checkov
+        if: github.event.inputs.scan_level != 'lint-only'
+        run: |
+          checkov -d . --config-file .checkov.yml --compact --quiet
+        continue-on-error: true
+
+      - name: Generate Security Report
+        if: github.event.inputs.scan_level != 'lint-only'
+        run: |
+          echo "## Security Scan Results" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "### TFSec Results" >> security-report.md
+          echo '```' >> security-report.md
+          tfsec . --config-file .tfsec.yml --format default >> security-report.md || true
+          echo '```' >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "### Checkov Results" >> security-report.md
+          echo '```' >> security-report.md
+          checkov -d . --config-file .checkov.yml --compact >> security-report.md || true
+          echo '```' >> security-report.md
+
+      - name: Upload Security Report
+        if: github.event.inputs.scan_level != 'lint-only'
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+          retention-days: 30
+
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request' && github.event.inputs.scan_level != 'lint-only'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const report = fs.readFileSync('security-report.md', 'utf8');
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🔍 Terraform Security & Quality Report\n\n${report}\n\n---\n*This report was generated automatically by the Terraform Quality workflow.*`
+              });
+            } catch (error) {
+              console.log('No security report found or error reading file:', error.message);
+            }
+
+      - name: Fail on Format Issues
+        if: steps.fmt.outcome == 'failure'
+        run: |
+          echo "::error::Terraform formatting check failed. Run 'terraform fmt -recursive' to fix."
+          exit 1

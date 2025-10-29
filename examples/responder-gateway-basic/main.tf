@@ -4,12 +4,12 @@ module "rtb_fabric" {
   responder_gateway = {
     create             = true
     description        = "terraform responder gateway basic test"
-    vpc_id             = "vpc-0eb82f4fa6f0aeea9"
-    subnet_ids         = ["subnet-09d3b444cff7c101f"]
-    security_group_ids = ["sg-03898147ca0749b4b"]
-    port               = 8080
+    vpc_id             = "vpc-01a185e1a42ffbb7b"
+    subnet_ids         = ["subnet-05f406bce380d07e8"]
+    security_group_ids = ["sg-0a79869648d9b8540"]
+    port               = 31234
     protocol           = "HTTP"
-
+    domain_name        = "k8s-default-biddernl-4999a78091-c16b86b98466e062.elb.us-east-1.amazonaws.com"
     tags = [
       {
         key   = "Environment"
