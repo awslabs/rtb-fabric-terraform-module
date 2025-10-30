@@ -1,57 +1,119 @@
-# End-to-End Test Example
+# RTB Fabric E2E Test Example
 
-Comprehensive test that creates a complete RTB Fabric setup with:
-- 1 Requester App
-- 1 EKS Responder App (with auto RBAC/access)
-- 1 ASG Responder App
-- 2 Links connecting requester to both responders
+This example creates a complete end-to-end RTB Fabric setup with requester gateway, EKS responder gateway, and a link connecting them.
 
-## Resources Created
+## Quick Start
 
-- **Requester App**: `e2e-test-requester`
-- **EKS Responder**: `e2e-test-responder-eks` (connects to shapirov-iad1 cluster)
-- **ASG Responder**: `e2e-test-responder-asg` (uses Application nodegroup ASG)
-- **EKS Link**: Connects requester to EKS responder
-- **ASG Link**: Connects requester to ASG responder
+1. **Copy the configuration template:**
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-## Usage
+2. **Edit your configuration:**
+   ```bash
+   # Edit terraform.tfvars with your cluster names
+   vim terraform.tfvars
+   ```
 
-### Manual
-```bash
-terraform init
-terraform plan
-terraform apply
+3. **Deploy:**
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
-# View outputs after deployment
-terraform output
+## Configuration
 
-# Get specific output
-terraform output requester_app_id
+### Required Variables
 
-terraform destroy
+- `requester_cluster_name`: EKS cluster name for the requester gateway
+- `responder_cluster_name`: EKS cluster name for the responder gateway
+
+### Optional Variables
+
+- `kubernetes_auth_role_arn`: IAM role for Kubernetes authentication (uses current AWS credentials if not specified)
+
+### Example Configuration
+
+```hcl
+# terraform.tfvars
+requester_cluster_name = "my-publisher-cluster"
+responder_cluster_name = "my-bidder-cluster"
+kubernetes_auth_role_arn = "arn:aws:iam::123456789012:role/MyEKSAccessRole"
 ```
 
-### Using Makefile
-```bash
-# Deploy all resources
-make deploy
+## What This Example Creates
 
-# Destroy all resources  
-make destroy
+1. **Requester Gateway**: Connected to your publisher/demand-side cluster
+2. **Responder Gateway**: Connected to your bidder/supply-side cluster with EKS managed endpoints
+3. **RTB Fabric Link**: Connecting the two gateways with sample configuration
+4. **EKS Service Discovery Role**: Custom role for endpoint discovery (auto-created)
 
-# Full end-to-end test (deploy + destroy)
-make e2e-test
-```
+## Auto-Discovery
 
-## Test Validation
+This example automatically discovers networking configuration from both EKS clusters:
 
-After deployment, verify:
-1. All RTB app IDs are generated
-2. Links are in ACTIVE state
-3. EKS access entries created
-4. RBAC resources created in cluster
-5. ASG endpoints discovered
+- **VPC**: Tagged with `kubernetes.io/cluster/<cluster_name>`
+- **Subnets**: Tagged with `kubernetes.io/role/internal-elb=1`
+- **Security Groups**: From EKS cluster configurations
+
+## Application Configuration
+
+The following settings use sensible defaults for E2E testing:
+
+- **Responder Port**: 8090 (HTTP)
+- **Endpoint Name**: "bidder-internal"
+- **Namespace**: "default"
+- **Link Configuration**: Sample error masking and module configuration
+- **EKS Service Discovery Role**: Custom naming with E2E prefix
+
+## Authentication
+
+The Kubernetes provider (used for the responder gateway) supports:
+
+1. **Current AWS Credentials** (default): Uses your current AWS CLI/SDK credentials
+2. **IAM Role**: Set `kubernetes_auth_role_arn` to assume a specific role for EKS access
+
+## Troubleshooting
+
+### Auto-Discovery Issues
+
+If you see auto-discovery errors for either cluster:
+
+1. Verify both EKS clusters exist and are accessible
+2. Check that VPCs have the tag: `kubernetes.io/cluster/<cluster_name> = owned` or `shared`
+3. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
+4. Verify your AWS credentials have EKS permissions for both clusters
+
+### Kubernetes Provider Issues
+
+If you see Kubernetes authentication errors:
+
+1. Verify your AWS credentials can access the responder cluster
+2. Check that the responder cluster has API access enabled
+3. Consider setting `kubernetes_auth_role_arn` if using cross-account or role-based access
+
+## Testing the E2E Setup
+
+After deployment, you can test the RTB Fabric link:
+
+1. Check the gateway status outputs
+2. Verify the link is active
+3. Send test traffic through the requester gateway
+4. Monitor logs and metrics through the configured link settings
+
+## Migration from Hardcoded Values
+
+If you're migrating from a previous version with hardcoded values:
+
+1. The provided `terraform.tfvars` maintains existing functionality
+2. Gradually migrate to `terraform.tfvars.example` as a template
+3. Update your cluster names and authentication settings as needed
 
 ## Cleanup
 
-Always run `make destroy` or `terraform destroy` to clean up test resources and avoid charges.
+```bash
+terraform destroy
+```
+
+**Note**: This will destroy all created resources including gateways and the link.

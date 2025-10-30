@@ -1,0 +1,26 @@
+# RTB Fabric Responder Gateway ASG Example Configuration
+# 
+# SETUP INSTRUCTIONS:
+# 1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+# 2. Edit terraform.tfvars with your specific values
+# 3. Run: terraform init && terraform plan && terraform apply
+
+# REQUIRED: Network configuration
+# Provide your VPC, subnets, and security groups manually
+vpc_id = "vpc-01234567890abcdef"
+subnet_ids = ["subnet-01234567890abcdef", "subnet-fedcba0987654321"]
+security_group_ids = ["sg-01234567890abcdef"]
+
+# REQUIRED: Auto Scaling Group names for managed endpoint discovery
+# List the ASG names where your application instances are running
+auto_scaling_group_names = ["my-app-asg-1", "my-app-asg-2"]
+
+# NOTE: This example uses Auto Scaling Groups for managed endpoint discovery.
+# The RTB Fabric service will automatically discover instances in the specified
+# ASGs and route traffic to them.
+#
+# The module will automatically create the RTBFabricAsgDiscoveryRole with
+# proper permissions for ASG instance discovery.
+#
+# Application settings (port 31234, HTTP protocol) use sensible defaults
+# and don't need configuration.

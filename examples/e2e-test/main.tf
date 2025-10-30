@@ -1,15 +1,4 @@
-# Variables for cluster names - customers provide these
-variable "requester_cluster_name" {
-  description = "Name of the EKS cluster for the requester gateway"
-  type        = string
-  default     = "publisher-eks"
-}
-
-variable "responder_cluster_name" {
-  description = "Name of the EKS cluster for the responder gateway"
-  type        = string
-  default     = "rtbkit-shapirov-iad"
-}
+# Variables are defined in variables.tf
 
 # Get current AWS account ID
 data "aws_caller_identity" "current" {}
@@ -24,6 +13,27 @@ module "requester_cluster_discovery" {
 module "responder_cluster_discovery" {
   source       = "../common"
   cluster_name = var.responder_cluster_name
+}
+
+# Validate auto-discovery results for both clusters
+locals {
+  requester_vpc_discovery_failed = length(module.requester_cluster_discovery.discovered_vpc_id) == 0
+  requester_subnet_discovery_failed = length(module.requester_cluster_discovery.discovered_private_subnet_ids) == 0
+  responder_vpc_discovery_failed = length(module.responder_cluster_discovery.discovered_vpc_id) == 0
+  responder_subnet_discovery_failed = length(module.responder_cluster_discovery.discovered_private_subnet_ids) == 0
+  
+  discovery_failed = local.requester_vpc_discovery_failed || local.requester_subnet_discovery_failed || local.responder_vpc_discovery_failed || local.responder_subnet_discovery_failed
+  
+  discovery_error_message = local.discovery_failed ? "Auto-discovery failed for one or more clusters. Please verify: 1) Clusters '${var.requester_cluster_name}' and '${var.responder_cluster_name}' exist, 2) VPCs are tagged with 'kubernetes.io/cluster/<cluster_name>', 3) Subnets are tagged with 'kubernetes.io/role/internal-elb=1'." : ""
+}
+
+# Validation resource to provide clear error messages
+resource "null_resource" "discovery_validation" {
+  count = local.discovery_failed ? 1 : 0
+  
+  provisioner "local-exec" {
+    command = "echo 'ERROR: ${local.discovery_error_message}' && exit 1"
+  }
 }
 
 # Single module instance for complete E2E test: Requester + EKS Responder + Link
@@ -80,10 +90,8 @@ module "rtb_fabric" {
         # Custom role name with auto-creation enabled to avoid conflicts
         eks_service_discovery_role = "E2ETest-${var.responder_cluster_name}-EKSDiscoveryRole"
         auto_create_role           = true
-        # cluster_access_role_arn if not specified - will use current Terraform credentials
-        cluster_access_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/rtbkit-shapirov-iad-EksAccessRole-CA7FhiO8nskv"
-        auto_create_access      = true
-        auto_create_rbac        = true
+        auto_create_access         = true
+        auto_create_rbac           = true
         # cluster_api_server_endpoint_uri automatically retrieved
         # cluster_api_server_ca_certificate_chain automatically retrieved
       }
@@ -284,6 +292,37 @@ output "responder_discovered_private_subnet_ids" {
 output "responder_discovered_security_group_id" {
   description = "Security group ID from responder EKS cluster"
   value       = module.responder_cluster_discovery.discovered_security_group_id
+}
+
+# Configuration transparency outputs
+output "configuration_summary" {
+  description = "Summary of configuration sources used"
+  value = {
+    requester_cluster_name_source = "variable"
+    responder_cluster_name_source = "variable"
+    requester_vpc_source = "auto-discovery"
+    requester_subnet_source = "auto-discovery"
+    requester_security_group_source = "auto-discovery"
+    responder_vpc_source = "auto-discovery"
+    responder_subnet_source = "auto-discovery"
+    responder_security_group_source = "auto-discovery"
+    authentication_source = var.kubernetes_auth_role_name != null ? "role-based" : "current-credentials"
+  }
+}
+
+# Final values used
+output "used_values" {
+  description = "Final configuration values used in deployment"
+  value = {
+    requester_cluster_name = var.requester_cluster_name
+    responder_cluster_name = var.responder_cluster_name
+    requester_vpc_id = module.requester_cluster_discovery.discovered_vpc_id
+    requester_subnet_ids = module.requester_cluster_discovery.discovered_private_subnet_ids
+    requester_security_group_ids = [module.requester_cluster_discovery.discovered_security_group_id]
+    responder_vpc_id = module.responder_cluster_discovery.discovered_vpc_id
+    responder_subnet_ids = module.responder_cluster_discovery.discovered_private_subnet_ids
+    responder_security_group_ids = [module.responder_cluster_discovery.discovered_security_group_id]
+  }
 }
 
 # EKS Service Discovery Role Output

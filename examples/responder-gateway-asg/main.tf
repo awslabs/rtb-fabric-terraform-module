@@ -11,15 +11,15 @@ module "rtb_fabric" {
   responder_gateway = {
     create             = true
     description        = "terraform responder gateway asg test"
-    vpc_id             = "vpc-01a185e1a42ffbb7b"
-    subnet_ids         = ["subnet-05f406bce380d07e8"]
-    security_group_ids = ["sg-0a79869648d9b8540"]
+    vpc_id             = var.vpc_id
+    subnet_ids         = var.subnet_ids
+    security_group_ids = var.security_group_ids
     port               = 31234
     protocol           = "HTTP"
 
     managed_endpoint_configuration = {
       auto_scaling_groups_configuration = {
-        auto_scaling_group_name_list = ["eks-EksNodegroupApplication-J3fkHClrMvmz-0ecac562-c566-3f37-20f9-0145a26266a9"]
+        auto_scaling_group_name_list = var.auto_scaling_group_names
         # asg_discovery_role = null  # Uses default RTBFabricAsgDiscoveryRole
         # auto_create_role = true    # Automatically creates the role (default)
       }
@@ -55,3 +55,24 @@ output "gateway_domain_name" {
   value       = module.rtb_fabric.responder_gateway_domain_name
 }
 
+# Configuration transparency outputs
+output "configuration_summary" {
+  description = "Summary of configuration sources used"
+  value = {
+    vpc_source = "manual"
+    subnet_source = "manual"
+    security_group_source = "manual"
+    asg_source = "manual"
+  }
+}
+
+# Final values used
+output "used_values" {
+  description = "Final configuration values used in deployment"
+  value = {
+    vpc_id = var.vpc_id
+    subnet_ids = var.subnet_ids
+    security_group_ids = var.security_group_ids
+    auto_scaling_group_names = var.auto_scaling_group_names
+  }
+}

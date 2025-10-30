@@ -39,6 +39,18 @@ This document outlines the requirements for refactoring the RTB Fabric Terraform
 4. WHEN using automatic setup, THE Terraform_Module SHALL create EKS access entries if auto_create_access is true
 5. WHEN using automatic setup, THE Terraform_Module SHALL create Kubernetes RBAC if auto_create_rbac is true
 
+### Requirement 2A
+
+**User Story:** As a Terraform module user, I want external kubernetes provider configuration, so that I have full control over authentication and can deploy to multiple clusters.
+
+#### Acceptance Criteria
+
+1. WHEN configuring kubernetes provider, THE Terraform_Module SHALL NOT define internal kubernetes provider blocks
+2. WHEN using single cluster, THE Terraform_Module SHALL use default kubernetes provider configured by user
+3. WHEN using multiple clusters, THE Terraform_Module SHALL support explicit provider passing with aliases
+4. WHEN using ASG endpoints, THE Terraform_Module SHALL NOT require kubernetes provider configuration
+5. WHEN using EKS endpoints, THE Terraform_Module SHALL require kubernetes provider to be configured externally
+
 ### Requirement 3
 
 **User Story:** As a Terraform module user, I want the module to automatically configure customer roles when auto-creation is enabled, so that I don't need to manually set up complex permissions.
@@ -74,6 +86,9 @@ This document outlines the requirements for refactoring the RTB Fabric Terraform
 3. WHEN providing examples, THE Terraform_Module SHALL demonstrate proper trust policy configuration
 4. WHEN providing examples, THE Terraform_Module SHALL show validation steps for manual setup
 5. WHEN providing examples, THE Terraform_Module SHALL use RTBFabric naming conventions
+6. WHEN providing examples, THE Terraform_Module SHALL demonstrate kubernetes provider configuration patterns
+7. WHEN providing examples, THE Terraform_Module SHALL show single-cluster and multi-cluster deployment patterns
+8. WHEN providing examples, THE Terraform_Module SHALL separate kubernetes provider configuration into dedicated files
 
 ### Requirement 5
 
@@ -98,3 +113,15 @@ This document outlines the requirements for refactoring the RTB Fabric Terraform
 3. WHEN creating EKS access entries, THE Terraform_Module SHALL use rtbfabric-endpoint-reader naming
 4. WHEN updating variables, THE Terraform_Module SHALL replace heimdall references with rtbfabric
 5. WHEN updating documentation, THE Terraform_Module SHALL use RTB Fabric service terminology
+
+### Requirement 7
+
+**User Story:** As a Terraform module maintainer, I want to eliminate "legacy module" restrictions, so that users can use modern Terraform features like count, for_each, and depends_on.
+
+#### Acceptance Criteria
+
+1. WHEN defining provider requirements, THE Terraform_Module SHALL NOT include internal kubernetes provider configurations
+2. WHEN using module calls, THE Terraform_Module SHALL support count, for_each, and depends_on arguments
+3. WHEN removing cluster_access_role_arn, THE Terraform_Module SHALL delegate kubernetes authentication to external provider configuration
+4. WHEN supporting multi-cluster, THE Terraform_Module SHALL enable explicit provider passing through providers argument
+5. WHEN maintaining compatibility, THE Terraform_Module SHALL work with both default and aliased kubernetes providers

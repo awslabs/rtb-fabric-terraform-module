@@ -1,0 +1,28 @@
+# RTB Fabric E2E Test Example Configuration
+# 
+# SETUP INSTRUCTIONS:
+# 1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+# 2. Edit terraform.tfvars with your specific values
+# 3. Run: terraform init && terraform plan && terraform apply
+
+# REQUIRED: Your EKS cluster names
+# These clusters will be used for auto-discovery of VPC, subnets, and security groups
+requester_cluster_name = "my-publisher-cluster"
+responder_cluster_name = "my-bidder-cluster"
+
+# OPTIONAL: IAM role name for Kubernetes provider authentication
+# Leave null to use current AWS credentials for EKS access
+# The full ARN will be constructed as: arn:aws:iam::{current_account_id}:role/{role_name}
+kubernetes_auth_role_name = null
+# kubernetes_auth_role_name = "MyEKSAccessRole"
+
+# NOTE: This example creates a complete E2E test with:
+# - Requester gateway (using requester_cluster_name)
+# - Responder gateway with EKS managed endpoints (using responder_cluster_name)
+# - Link connecting the two gateways
+#
+# Network configuration (VPC, subnets, security groups) is auto-discovered
+# from your EKS cluster tags for both clusters.
+#
+# Application settings (ports, protocols, endpoint names, namespaces, link configuration)
+# use sensible defaults for E2E testing and don't need configuration.

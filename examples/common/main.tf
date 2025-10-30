@@ -2,21 +2,18 @@
 # This file provides reusable data sources and locals for discovering
 # VPC, subnets, and security groups based on EKS cluster name
 
-# Discover VPC tagged with kubernetes.io/cluster/<cluster_name> (owned or shared)
-# Also requires kubernetes.io/role/internal-elb=1 to ensure private subnet support
-data "aws_vpcs" "cluster_vpcs" {
-  tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "*" # Matches both "owned" and "shared"
-  }
+# Get EKS cluster information - this is the source of truth
+data "aws_eks_cluster" "cluster" {
+  name = var.cluster_name
 }
 
-# Get the first VPC (there should typically be only one)
+# Extract VPC ID directly from EKS cluster configuration
 locals {
-  cluster_vpc_id = data.aws_vpcs.cluster_vpcs.ids[0]
+  cluster_vpc_id = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
+  cluster_security_group_id = data.aws_eks_cluster.cluster.vpc_config[0].cluster_security_group_id
 }
 
-# Discover private subnets tagged with kubernetes.io/cluster/<cluster_name> (owned or shared)
-# Filters for private subnets suitable for internal load balancers
+# Discover private subnets suitable for internal load balancers in the cluster's VPC
 data "aws_subnets" "cluster_subnets" {
   filter {
     name   = "vpc-id"
@@ -24,16 +21,6 @@ data "aws_subnets" "cluster_subnets" {
   }
 
   tags = {
-    "kubernetes.io/role/internal-elb"           = "1" # Private subnets for internal load balancers
+    "kubernetes.io/role/internal-elb" = "1" # Private subnets for internal load balancers
   }
-}
-
-# Get EKS cluster to find its security group
-data "aws_eks_cluster" "cluster" {
-  name = var.cluster_name
-}
-
-# Use the cluster's security group
-locals {
-  cluster_security_group_id = data.aws_eks_cluster.cluster.vpc_config[0].cluster_security_group_id
 }

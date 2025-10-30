@@ -1,17 +1,27 @@
-# Variable for cluster name - customers provide this
-variable "cluster_name" {
-  description = "Name of the EKS cluster to discover VPC and networking resources from"
-  type        = string
-  default     = "rtbkit-shapirov-iad"
-}
+# Variables are defined in variables.tf
 
-# Get current AWS account ID
-data "aws_caller_identity" "current" {}
 
 # Use shared EKS cluster discovery logic
 module "cluster_discovery" {
   source       = "../common"
   cluster_name = var.cluster_name
+}
+
+# Validate auto-discovery results
+locals {
+  vpc_discovery_failed    = length(module.cluster_discovery.discovered_vpc_id) == 0
+  subnet_discovery_failed = length(module.cluster_discovery.discovered_private_subnet_ids) == 0
+
+  discovery_error_message = local.vpc_discovery_failed || local.subnet_discovery_failed ? "Auto-discovery failed for cluster '${var.cluster_name}'. Please verify: 1) The cluster exists, 2) VPC is tagged with 'kubernetes.io/cluster/${var.cluster_name}', 3) Subnets are tagged with 'kubernetes.io/role/internal-elb=1'. If auto-discovery cannot be used, consider using a different example with manual network configuration." : ""
+}
+
+# Validation resource to provide clear error messages
+resource "null_resource" "discovery_validation" {
+  count = (local.vpc_discovery_failed || local.subnet_discovery_failed) ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "echo 'ERROR: ${local.discovery_error_message}' && exit 1"
+  }
 }
 
 module "rtb_fabric" {
@@ -82,6 +92,18 @@ output "gateway_domain_name" {
   value       = module.rtb_fabric.responder_gateway_domain_name
 }
 
+# Configuration transparency outputs
+output "configuration_summary" {
+  description = "Summary of configuration sources used"
+  value = {
+    cluster_name_source   = "variable"
+    vpc_source            = "auto-discovery"
+    subnet_source         = "auto-discovery"
+    security_group_source = "auto-discovery"
+    authentication_source = var.kubernetes_auth_role_name != null ? "role-based" : "current-credentials"
+  }
+}
+
 # Discovery outputs for reference
 output "discovered_vpc_id" {
   description = "VPC ID discovered from cluster tags"
@@ -96,4 +118,15 @@ output "discovered_private_subnet_ids" {
 output "discovered_security_group_id" {
   description = "Security group ID from EKS cluster"
   value       = module.cluster_discovery.discovered_security_group_id
+}
+
+# Final values used
+output "used_values" {
+  description = "Final configuration values used in deployment"
+  value = {
+    cluster_name       = var.cluster_name
+    vpc_id             = module.cluster_discovery.discovered_vpc_id
+    subnet_ids         = module.cluster_discovery.discovered_private_subnet_ids
+    security_group_ids = [module.cluster_discovery.discovered_security_group_id]
+  }
 }

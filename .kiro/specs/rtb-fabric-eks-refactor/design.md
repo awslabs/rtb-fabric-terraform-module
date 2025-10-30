@@ -364,25 +364,104 @@ The primary testing approach focuses on updating and validating examples to demo
 3. **Multi-Cluster Scenarios**: Validate e2e-test example with separate cluster providers
 4. **Backward Compatibility**: Ensure no breaking changes to core RTB Fabric functionality
 
-## Migration Path
+## Final Architecture: External Kubernetes Provider Configuration
 
-### Breaking Changes (No Customer Impact)
-Since there are no existing customers, we can make clean breaking changes:
+### Architecture Decision
+The module implements **external kubernetes provider configuration** following Terraform best practices and supporting multi-cluster deployments.
+
+### Key Principles
+1. **No Internal Provider**: Module does not define kubernetes provider blocks internally
+2. **External Configuration**: Users configure kubernetes provider in their calling code
+3. **Multi-Cluster Support**: Explicit provider passing enables multiple cluster deployments
+4. **Clean Separation**: Kubernetes authentication handled externally, module focuses on RTB Fabric
+5. **ASG Compatibility**: ASG examples work without kubernetes provider requirements
+
+### Implementation Patterns
+
+#### Single Cluster Pattern
+```hcl
+# User configures kubernetes provider
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "my-cluster"]
+  }
+}
+
+# Module uses default kubernetes provider
+module "rtb_fabric" {
+  source = "../../"
+  # Uses kubernetes provider configured above
+}
+```
+
+#### Multi-Cluster Pattern
+```hcl
+# Multiple kubernetes providers with aliases
+provider "kubernetes" {
+  alias = "cluster_a"
+  # cluster A configuration
+}
+
+provider "kubernetes" {
+  alias = "cluster_b"
+  # cluster B configuration
+}
+
+# Multiple module instances with explicit provider passing
+module "rtb_fabric_a" {
+  providers = {
+    kubernetes = kubernetes.cluster_a
+  }
+}
+
+module "rtb_fabric_b" {
+  providers = {
+    kubernetes = kubernetes.cluster_b
+  }
+}
+```
+
+#### Example Organization Pattern
+```
+examples/responder-gateway-eks-manual/
+├── main.tf                    # RTB Fabric configuration
+├── kubernetes-provider.tf     # Kubernetes provider configuration
+└── README.md                  # Documentation
+```
+
+### Benefits Achieved
+1. **Modern Terraform**: Eliminates "legacy module" restrictions, supports `count`, `for_each`, `depends_on`
+2. **Multi-Cluster Ready**: Native support for complex deployment scenarios
+3. **Flexible Authentication**: Supports various AWS authentication methods
+4. **Clean Examples**: Clear separation between infrastructure and business logic
+5. **User Control**: Complete control over kubernetes authentication patterns
+
+### Migration Path
+
+#### Breaking Changes (No Customer Impact)
+Since there are no existing customers, clean breaking changes were implemented:
 
 1. **Provider Architecture**: Kubernetes provider must now be configured externally
 2. **Variable Interface**: `cluster_access_role_arn` parameter removed from `eks_endpoints_configuration`
 3. **Legacy Cleanup**: `HeimdallAssumeRole` default creation removed
 4. **Resource Naming**: Resource names changed from `heimdall-*` to `rtbfabric-*`
+5. **Example Structure**: Provider configuration separated into dedicated files
 
-### Migration Benefits
-1. **Modern Terraform Practices**: Eliminates "legacy module" restrictions
-2. **Enhanced Flexibility**: Supports complex authentication and multi-cluster scenarios
-3. **Cleaner Interface**: Simplified variable structure focused on RTB Fabric concerns
-4. **Better Error Handling**: Kubernetes authentication errors are clearer and more actionable
+#### Implementation Completed
+1. **Core Module Changes**: Updated provider requirements, removed internal provider
+2. **Variable Cleanup**: Removed kubernetes authentication parameters
+3. **Example Updates**: Added kubernetes provider configurations to all EKS examples
+4. **Validation Simplification**: Removed kubernetes-specific validations
+5. **Documentation**: Updated README with comprehensive examples and patterns
 
-### Implementation Order
-1. **Core Module Changes**: Update provider requirements and remove internal provider
-2. **Variable Cleanup**: Remove kubernetes authentication parameters
-3. **Example Updates**: Add kubernetes provider configurations to all examples
-4. **Validation Simplification**: Remove kubernetes-specific validations
-5. **Documentation**: Update examples to demonstrate new patterns
+### Design Validation
+This architecture has been validated through:
+- ✅ **Single-cluster examples**: Work with default kubernetes provider
+- ✅ **Multi-cluster examples**: Work with explicit provider passing
+- ✅ **ASG examples**: Work without kubernetes provider configuration
+- ✅ **Modern Terraform**: No "legacy module" restrictions
+- ✅ **User Experience**: Clean separation of concerns, flexible authentication

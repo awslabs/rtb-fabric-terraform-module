@@ -1,69 +1,108 @@
-# RTB Fabric Responder Gateway with EKS Endpoints (Automatic Setup)
+# RTB Fabric Responder Gateway EKS Example
 
-Creates an RTB Fabric responder gateway with EKS endpoints using automatic role configuration.
+This example creates an RTB Fabric responder gateway with EKS managed endpoints for automatic service discovery.
 
-## Features
+## Quick Start
 
-- **Auto-retrieves** cluster endpoint URI and CA certificate from cluster name
-- **Auto-configures** customer role trust policy with RTB Fabric service principals
-- **Auto-creates** EKS access entry for customer role (optional)
-- **Auto-creates** RBAC permissions for endpoint access (optional)
-- **Flexible authentication** - supports custom cluster access role
-- **Customer role required** - uses customer-managed IAM role instead of legacy HeimdallAssumeRole
+1. **Copy the configuration template:**
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-## Prerequisites
+2. **Edit your configuration:**
+   ```bash
+   # Edit terraform.tfvars with your cluster name
+   vim terraform.tfvars
+   ```
 
-- EKS cluster with `API` or `API_AND_CONFIG_MAP` authentication mode (for access entries)
-- Customer-managed IAM role for RTB Fabric service access
-- IAM role with EKS permissions for cluster access (if using `cluster_access_role_arn`)
-- Kubernetes endpoint resource deployed in the cluster
+3. **Deploy:**
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
-## Usage
+## Configuration
 
-1. Update `main.tf` with your:
-   - AWS resource IDs (VPC, subnets, security groups)
-   - EKS cluster name
-   - Endpoint resource name and namespace
-   - Cluster access role ARN (optional)
-2. Run:
-```bash
-terraform init
-terraform plan
-terraform apply
+### Required Variables
 
-# View outputs after deployment
-terraform output
+- `cluster_name`: Your EKS cluster name
 
-# Get specific output
-terraform output responder_app_id
+### Optional Variables
+
+- `kubernetes_auth_role_arn`: IAM role for Kubernetes authentication (uses current AWS credentials if not specified)
+
+### Example Configuration
+
+```hcl
+# terraform.tfvars
+cluster_name = "my-bidder-cluster"
+kubernetes_auth_role_arn = "arn:aws:iam::123456789012:role/MyEKSAccessRole"
 ```
 
-## Configuration Options
+## Auto-Discovery
 
-### Auto-Configuration (Default)
-- `customer_role_arn` - **Required** customer-managed IAM role ARN
-- `auto_create_access = true` - Configures customer role trust policy and creates EKS access entries
-- `auto_create_rbac = true` - Creates Kubernetes RBAC resources automatically
-- `cluster_access_role_arn` - IAM role for Kubernetes API access (optional)
+This example automatically discovers networking configuration from your EKS cluster:
 
-### Manual Configuration
-- Set `auto_create_access = false` to manage role trust policy and EKS access entries manually
-- Set `auto_create_rbac = false` to manage RBAC manually
-- Provide `cluster_api_server_endpoint_uri` and `cluster_api_server_ca_certificate_chain` to bypass auto-retrieval
+### Requirements for Auto-Discovery
 
-## Resources Created
+**EKS Cluster:**
+- Must exist and be accessible with the specified cluster name
+- Your AWS credentials must have `eks:DescribeCluster` permission
 
-- 1 RTB Fabric Responder Gateway with EKS endpoints
-- 1 Customer role trust policy update (if `auto_create_access = true` and trust policy missing)
-- 1 IAM policy attachment for AmazonEKSViewPolicy (if `auto_create_access = true`)
-- 1 EKS Access Entry for customer role (if `auto_create_access = true`)
-- 1 EKS Access Policy Association with namespace scope (if `auto_create_access = true`)
-- 1 Kubernetes Role for endpoint access (if `auto_create_rbac = true`)
-- 1 Kubernetes RoleBinding (if `auto_create_rbac = true`)
+**Subnet Tags (Optional):**
+- `kubernetes.io/role/internal-elb = 1` (for private subnets used by internal load balancers)
+- If no subnets have this tag, you may need to add it to your private subnets
 
-## Benefits
+### What Gets Discovered
+- **VPC**: Retrieved directly from EKS cluster configuration
+- **Subnets**: Private subnets in the cluster's VPC tagged with `kubernetes.io/role/internal-elb=1`
+- **Security Group**: Cluster security group from EKS cluster configuration
 
-- **Customer role model** - uses customer-managed roles instead of legacy HeimdallAssumeRole
-- **Automatic configuration** - sets up trust policies and permissions automatically
-- **Validation** - ensures customer role has proper RTB Fabric service trust relationships
-- **Flexible setup** - supports both automatic and manual configuration approaches
+## Application Configuration
+
+The following settings use sensible defaults and don't need configuration:
+
+- **Port**: 8090 (HTTP)
+- **Endpoint Name**: "bidder-internal"
+- **Namespace**: "default"
+- **Protocol**: HTTP
+
+## Authentication
+
+The example supports two authentication modes:
+
+1. **Current AWS Credentials** (default): Uses your current AWS CLI/SDK credentials
+2. **IAM Role**: Set `kubernetes_auth_role_arn` to assume a specific role for EKS access
+
+## Troubleshooting
+
+### Auto-Discovery Issues
+
+If you see auto-discovery errors:
+
+1. Verify your EKS cluster exists and is accessible
+2. Check that your VPC has the tag: `kubernetes.io/cluster/<cluster_name> = owned` or `shared`
+3. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
+4. Verify your AWS credentials have EKS permissions
+
+### Alternative Solutions
+
+If auto-discovery doesn't work for your setup, consider:
+
+- `responder-gateway-basic`: Manual network configuration
+- `responder-gateway-asg`: Auto Scaling Group endpoints
+
+## Migration from Hardcoded Values
+
+If you're migrating from a previous version with hardcoded values:
+
+1. The provided `terraform.tfvars` maintains existing functionality
+2. Gradually migrate to `terraform.tfvars.example` as a template
+3. Update your cluster name and authentication settings as needed
+
+## Cleanup
+
+```bash
+terraform destroy
+```

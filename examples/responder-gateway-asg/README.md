@@ -1,100 +1,128 @@
-# Responder Gateway with Auto Scaling Groups Example
+# RTB Fabric Responder Gateway ASG Example
 
-Creates an RTB Fabric responder gateway with Auto Scaling Groups configuration using automatic role creation.
+This example creates an RTB Fabric responder gateway with Auto Scaling Group managed endpoints for automatic instance discovery.
 
-## Overview
+## Quick Start
 
-This example demonstrates the **automatic setup** approach for ASG managed endpoints. The module will automatically create an ASG discovery role (`RTBFabricAsgDiscoveryRole`) with the proper trust policy and permissions for RTB Fabric service access.
+1. **Copy the configuration template:**
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-## Prerequisites
+2. **Edit your configuration:**
+   ```bash
+   # Edit terraform.tfvars with your ASG and network settings
+   vim terraform.tfvars
+   ```
 
-- Existing Auto Scaling Groups
-- VPC, subnets, and security groups for the responder gateway
+3. **Deploy:**
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
-## Configuration Approaches
+## Configuration
 
-### Automatic Setup (This Example)
-The module creates and configures the ASG discovery role automatically:
-- Creates `RTBFabricAsgDiscoveryRole` (or custom name)
-- Configures trust policy with RTB Fabric service principals
-- Attaches ASG and EC2 discovery permissions with region restrictions
+### Required Variables
 
-### Manual Setup (Alternative)
-For pre-configured roles, set:
+- `vpc_id`: VPC ID where the gateway will be deployed
+- `subnet_ids`: List of subnet IDs for the gateway
+- `security_group_ids`: List of security group IDs for the gateway
+- `auto_scaling_group_names`: List of Auto Scaling Group names for endpoint discovery
+
+### Example Configuration
+
 ```hcl
-auto_scaling_groups_configuration = {
-  auto_scaling_group_name_list = ["my-asg-1", "my-asg-2"]
-  asg_discovery_role          = "MyExistingRole"
-  auto_create_role            = false
-}
+# terraform.tfvars
+vpc_id = "vpc-01234567890abcdef"
+subnet_ids = ["subnet-01234567890abcdef", "subnet-fedcba0987654321"]
+security_group_ids = ["sg-01234567890abcdef"]
+auto_scaling_group_names = ["my-app-asg-1", "my-app-asg-2"]
 ```
 
-## Required Trust Policy (Manual Setup)
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": [
-          "rtbfabric.amazonaws.com",
-          "rtbfabric-endpoints.amazonaws.com"
-        ]
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-```
+## How ASG Managed Endpoints Work
 
-## Required Permissions (Manual Setup)
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AsgEndpointsIpDiscovery",
-      "Effect": "Allow",
-      "Action": [
-        "autoscaling:DescribeAutoScalingGroups",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeInstances",
-        "ec2:DescribeAvailabilityZones"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "ec2:Region": "us-east-1"
-        }
-      }
-    }
-  ]
-}
-```
+This example uses Auto Scaling Groups for managed endpoint discovery:
 
-## Usage
+1. **RTB Fabric Service**: Automatically discovers instances in the specified ASGs
+2. **Dynamic Routing**: Routes traffic to healthy instances in the ASGs
+3. **Auto-Scaling**: Automatically adapts to ASG scaling events
+4. **Health Monitoring**: Only routes to healthy instances
 
-1. Update `main.tf` with your:
-   - VPC ID, subnet IDs, and security group IDs
-   - Auto Scaling Group names
-   - Optional: Custom role name for enterprise naming conventions
+## IAM Role Creation
 
-2. Run:
+The module automatically creates the `RTBFabricAsgDiscoveryRole` with:
+
+- Proper trust policy for RTB Fabric services
+- Permissions to describe Auto Scaling Groups and EC2 instances
+- Automatic attachment to the responder gateway
+
+## Application Configuration
+
+The following settings use sensible defaults:
+
+- **Port**: 31234 (HTTP)
+- **Protocol**: HTTP
+- **Environment**: "Test"
+
+## Network Requirements
+
+Ensure your configuration meets these requirements:
+
+- **VPC**: Must exist and be accessible
+- **Subnets**: Should be private subnets suitable for internal load balancers
+- **Security Groups**: Must allow inbound traffic on the configured port (31234)
+- **ASGs**: Must exist and contain running instances with your application
+
+## Validation
+
+The example includes validation for:
+
+- Valid AWS VPC ID format (`vpc-xxxxxxxx`)
+- Valid AWS subnet ID format (`subnet-xxxxxxxx`)
+- Valid AWS security group ID format (`sg-xxxxxxxx`)
+- At least one Auto Scaling Group name provided
+
+## Troubleshooting
+
+### ASG Discovery Issues
+
+If you see endpoint discovery errors:
+
+1. Verify all ASG names exist and are accessible
+2. Check that ASGs have running, healthy instances
+3. Ensure instances are running your application on the expected port
+4. Verify the RTBFabricAsgDiscoveryRole has proper permissions
+
+### Network Configuration Issues
+
+If you see deployment errors:
+
+1. Verify all resource IDs exist and are accessible
+2. Check that subnets are in the specified VPC
+3. Ensure security groups allow the required traffic
+4. Verify ASG instances are in the same VPC/subnets
+
+### Alternative Solutions
+
+If ASG discovery doesn't work for your setup:
+
+- `responder-gateway-eks`: EKS managed endpoints with auto-discovery
+- `responder-gateway-basic`: Manual configuration with custom domain
+
+## Migration from Hardcoded Values
+
+If you're migrating from a previous version with hardcoded values:
+
+1. The provided `terraform.tfvars` maintains existing functionality
+2. Gradually migrate to `terraform.tfvars.example` as a template
+3. Update your ASG names and network configuration as needed
+
+## Cleanup
+
 ```bash
-terraform init
-terraform plan
-terraform apply
-
-# View outputs after deployment
-terraform output
-
-# Get specific output
-terraform output responder_gateway_id
+terraform destroy
 ```
 
-## Resources Created
-
-- 1 RTB Fabric Responder Gateway with ASG endpoints
-- 1 IAM Role for ASG discovery (RTBFabricAsgDiscoveryRole)
-- 1 IAM Policy with ASG and EC2 permissions
+**Note**: This will destroy the gateway and associated IAM role, but not your Auto Scaling Groups.

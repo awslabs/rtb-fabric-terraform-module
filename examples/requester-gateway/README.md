@@ -1,100 +1,93 @@
-# RTB Fabric Requester Gateway with EKS Cluster Discovery
+# RTB Fabric Requester Gateway Example
 
-This example demonstrates how to create an RTB Fabric requester gateway using **automatic resource discovery** based on an EKS cluster name.
+This example creates an RTB Fabric requester gateway with automatic network discovery from an EKS cluster.
 
-## How It Works
+## Quick Start
 
-Instead of manually specifying VPC, subnets, and security groups, this example:
+1. **Copy the configuration template:**
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-1. **Takes a cluster name** as input variable
-2. **Discovers the VPC** tagged with `kubernetes.io/cluster/<cluster_name>` (supports both "owned" and "shared" values)
-3. **Discovers private subnets** in that VPC with the same cluster tag and names starting with "Private"
-4. **Gets the cluster security group** from the EKS cluster configuration
-5. **Uses these discovered resources** for the requester gateway
+2. **Edit your configuration:**
+   ```bash
+   # Edit terraform.tfvars with your cluster name
+   vim terraform.tfvars
+   ```
 
-## Prerequisites
+3. **Deploy:**
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
-Your EKS cluster must have the standard Kubernetes tags:
-- **VPC**: Tagged with `kubernetes.io/cluster/<cluster_name>` = "owned" or "shared"
-- **Private Subnets**: Tagged with `kubernetes.io/cluster/<cluster_name>` = "owned" or "shared" AND named starting with "Private" (e.g., "PrivateSubnet1", "PrivateSubnet2")
-- **EKS Cluster**: Must exist and be accessible
+## Configuration
 
-These tags are automatically created by EKS when you create a cluster. The "owned" value means the cluster manages the resource lifecycle, while "shared" means multiple clusters can use the resource.
+### Required Variables
 
-## Usage
+- `cluster_name`: Your EKS cluster name (used for network auto-discovery)
 
-### Option 1: Use Default Cluster Name
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-This uses the default cluster name `my-eks-cluster`.
+### Example Configuration
 
-### Option 2: Specify Your Cluster Name
-```bash
-terraform init
-terraform plan -var="cluster_name=your-cluster-name"
-terraform apply -var="cluster_name=your-cluster-name"
-```
-
-### Option 3: Use terraform.tfvars
-Create a `terraform.tfvars` file:
 ```hcl
-cluster_name = "production-eks-cluster"
+# terraform.tfvars
+cluster_name = "my-publisher-cluster"
 ```
 
-Then run:
+## Auto-Discovery
+
+This example automatically discovers networking configuration from your EKS cluster:
+
+### Requirements for Auto-Discovery
+
+**EKS Cluster:**
+- Must exist and be accessible with the specified cluster name
+- Your AWS credentials must have `eks:DescribeCluster` permission
+
+**Subnet Tags (Optional):**
+- `kubernetes.io/role/internal-elb = 1` (for private subnets used by internal load balancers)
+- If no subnets have this tag, you may need to add it to your private subnets
+
+### What Gets Discovered
+- **VPC**: Retrieved directly from EKS cluster configuration
+- **Subnets**: Private subnets in the cluster's VPC tagged with `kubernetes.io/role/internal-elb=1`
+- **Security Group**: Cluster security group from EKS cluster configuration
+
+No Kubernetes provider authentication is needed for requester gateways.
+
+## Application Configuration
+
+The following settings use sensible defaults and don't need configuration:
+
+- **Environment**: "Prod"
+- **Description**: Generated from cluster name
+
+## Troubleshooting
+
+### Auto-Discovery Issues
+
+If you see auto-discovery errors:
+
+1. Verify your EKS cluster exists and is accessible
+2. Check that your VPC has the tag: `kubernetes.io/cluster/<cluster_name> = owned` or `shared`
+3. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
+4. Verify your AWS credentials have EKS permissions
+
+### Alternative Solutions
+
+If auto-discovery doesn't work for your setup, you may need to create a custom example with manual network configuration similar to `responder-gateway-basic`.
+
+## Migration from Hardcoded Values
+
+If you're migrating from a previous version with hardcoded values:
+
+1. The provided `terraform.tfvars` maintains existing functionality
+2. Gradually migrate to `terraform.tfvars.example` as a template
+3. Update your cluster name as needed
+
+## Cleanup
+
 ```bash
-terraform init
-terraform plan
-terraform apply
+terraform destroy
 ```
-
-## What Gets Created
-
-- **RTB Fabric Requester Gateway** in the discovered VPC and subnets
-- **Automatic tagging** with cluster name for easy identification
-
-## Outputs
-
-The example provides outputs showing what was discovered:
-```bash
-terraform output discovered_vpc_id
-terraform output discovered_private_subnet_ids
-terraform output discovered_security_group_id
-terraform output cluster_name_used
-```
-
-## Benefits
-
-- **Simplified Configuration**: Just provide cluster name instead of multiple resource IDs
-- **Automatic Discovery**: No need to manually look up VPC/subnet/security group IDs
-- **Consistent with EKS**: Uses the same networking resources as your EKS cluster
-- **Reduced Errors**: Eliminates manual ID copy/paste mistakes
-- **Environment Agnostic**: Works across different AWS accounts/regions
-
-## Example Output
-
-```
-discovered_vpc_id = "vpc-0123456789abcdef0"
-discovered_private_subnet_ids = [
-  "subnet-0123456789abcdef0",  # PrivateSubnet1
-  "subnet-0987654321fedcba0",  # PrivateSubnet2
-  "subnet-0abcdef123456789"    # PrivateSubnet3
-]
-discovered_security_group_id = "sg-0123456789abcdef0"
-cluster_name_used = "my-production-cluster"
-```
-
-## Tag Value Support
-
-The discovery supports both EKS tagging patterns:
-- **"owned"**: Cluster manages the resource lifecycle (typical for cluster-specific VPCs)
-- **"shared"**: Resource is shared between multiple clusters (common in enterprise environments)
-
-## Private Subnet Filtering
-
-Only subnets with names starting with "Private" are selected, ensuring the requester gateway is deployed in private subnets for security best practices.
-
-This approach makes it much easier to deploy RTB Fabric gateways that integrate with existing EKS infrastructure!

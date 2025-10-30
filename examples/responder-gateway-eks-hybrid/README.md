@@ -1,75 +1,137 @@
-# RTB Fabric Responder Gateway with EKS Endpoints (Hybrid Setup)
+# RTB Fabric Responder Gateway EKS Hybrid Example
 
-This example demonstrates the **hybrid approach** where you create an EKS Service Discovery Role and let the module automatically create EKS access entries and Kubernetes RBAC.
+This example creates an RTB Fabric responder gateway with EKS managed endpoints using a custom IAM role creation approach.
 
-## What This Example Creates
+## Quick Start
 
-This complete, runnable example creates:
+1. **Copy the configuration template:**
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-1. **EKS Service Discovery Role** (`MyCompany-RTBFabric-EKS-Role`) with proper RTB Fabric trust relationship
-2. **RTB Fabric Responder Gateway** configured to use the role
-3. **Automatic EKS access entry** creation (via `auto_create_access = true`)
-4. **Automatic Kubernetes RBAC** creation (via `auto_create_rbac = true`)
+2. **Edit your configuration:**
+   ```bash
+   # Edit terraform.tfvars with your cluster name
+   vim terraform.tfvars
+   ```
 
-## Use Case
+3. **Deploy:**
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
-This approach is ideal when:
-- You want to control role creation and naming
-- You want the module to handle EKS access entry creation
-- You want the module to handle Kubernetes RBAC creation
-- You prefer automation for access management but control over role creation
+## Configuration
 
-## Prerequisites
+### Required Variables
 
-- **EKS Cluster** with access entries support (API or API_AND_CONFIG_MAP authentication mode)
-- **Kubernetes Endpoint** resource deployed in the target namespace
+- `cluster_name`: Your EKS cluster name
 
-## What the Module Will Do
+### Optional Variables
 
-With `auto_create_access = true` and `auto_create_rbac = true`, the module will:
+- `kubernetes_auth_role_arn`: IAM role for Kubernetes authentication (uses current AWS credentials if not specified)
 
-- ✅ **Attach AmazonEKSViewPolicy** to your existing role
-- ✅ **Create EKS access entry** for your role
-- ✅ **Associate EKS access policy** with namespace scope
-- ✅ **Create Kubernetes Role** for endpoint reading
-- ✅ **Create Kubernetes RoleBinding** for your role
+### Example Configuration
 
-## What You Need to Provide
-
-- ✅ **AWS credentials** with permissions to create IAM roles and RTB Fabric resources
-- ✅ **EKS cluster** with the name specified in the configuration
-- ✅ **VPC and networking** resources (update the IDs in main.tf)
-
-## Usage
-
-1. Update the resource IDs in `main.tf` (VPC, subnets, security groups, cluster name)
-2. Run:
-
-```bash
-terraform init
-terraform plan
-terraform apply
-
-# View the created role information
-terraform output rtb_fabric_eks_role_arn
-terraform output rtb_fabric_eks_role_name
+```hcl
+# terraform.tfvars
+cluster_name = "my-bidder-cluster"
+kubernetes_auth_role_arn = "arn:aws:iam::123456789012:role/MyEKSAccessRole"
 ```
 
-## What Happens When You Run This
+## What Makes This "Hybrid"
 
-1. **Terraform creates** the `MyCompany-RTBFabric-EKS-Role` with RTB Fabric trust relationship
-2. **Module automatically**:
-   - Attaches `AmazonEKSViewPolicy` to the role
-   - Creates EKS access entry for the role
-   - Associates EKS access policy with namespace scope
-   - Creates Kubernetes Role for endpoint reading
-   - Creates Kubernetes RoleBinding for the role
-3. **RTB Fabric service** can now assume the role and access your EKS endpoints
+This example demonstrates a hybrid approach to IAM role management:
 
-## Benefits
+1. **Custom Role Creation**: Creates its own RTB Fabric EKS Service Discovery Role
+2. **Custom Naming**: Uses "MyCompany-RTBFabric-EKS-Role" instead of default naming
+3. **Custom Tags**: Applies custom tags for enterprise environments
+4. **Auto-Discovery**: Still uses EKS cluster auto-discovery for networking
+5. **Automatic Integration**: Module still handles policy attachment and EKS access
 
-- **Complete Example**: Ready to run with minimal configuration changes
-- **Control**: You see exactly how the role is created
-- **Automation**: Module handles all EKS and Kubernetes access setup
-- **Enterprise Ready**: Demonstrates custom role naming conventions
-- **Security**: Role has minimal required permissions with proper trust relationships
+## Auto-Discovery
+
+This example automatically discovers networking configuration from your EKS cluster:
+
+- **VPC**: Tagged with `kubernetes.io/cluster/<cluster_name>`
+- **Subnets**: Tagged with `kubernetes.io/role/internal-elb=1`
+- **Security Group**: From EKS cluster configuration
+
+## IAM Role Management
+
+The example creates a custom IAM role with:
+
+- **Custom Name**: "MyCompany-RTBFabric-EKS-Role"
+- **Proper Trust Policy**: For RTB Fabric services
+- **Custom Tags**: Environment, Purpose, Example tags
+- **Automatic Integration**: Module handles policy attachment
+
+## Application Configuration
+
+The following settings use sensible defaults:
+
+- **Port**: 8080 (HTTP)
+- **Endpoint Name**: "bidder"
+- **Namespace**: "default"
+- **Protocol**: HTTP
+- **Environment**: "Staging"
+
+## Authentication
+
+The example supports two authentication modes:
+
+1. **Current AWS Credentials** (default): Uses your current AWS CLI/SDK credentials
+2. **IAM Role**: Set `kubernetes_auth_role_arn` to assume a specific role for EKS access
+
+## When to Use This Example
+
+This example is suitable when:
+
+- You need custom IAM role naming for enterprise compliance
+- You want to apply custom tags to IAM resources
+- You need a hybrid approach between full automation and manual control
+- You want to understand how custom role creation works with RTB Fabric
+
+## Troubleshooting
+
+### Auto-Discovery Issues
+
+If you see auto-discovery errors:
+
+1. Verify your EKS cluster exists and is accessible
+2. Check that your VPC has the tag: `kubernetes.io/cluster/<cluster_name> = owned` or `shared`
+3. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
+4. Verify your AWS credentials have EKS permissions
+
+### IAM Role Issues
+
+If you see IAM-related errors:
+
+1. Verify your AWS credentials have IAM permissions to create roles
+2. Check that the role name doesn't conflict with existing roles
+3. Ensure your account has permission to create RTB Fabric service roles
+
+### Alternative Solutions
+
+If this hybrid approach doesn't fit your needs:
+
+- `responder-gateway-eks`: Fully automated role creation
+- `responder-gateway-basic`: Manual network configuration
+- `responder-gateway-asg`: Auto Scaling Group endpoints
+
+## Migration from Hardcoded Values
+
+If you're migrating from a previous version with hardcoded values:
+
+1. The provided `terraform.tfvars` maintains existing functionality
+2. Gradually migrate to `terraform.tfvars.example` as a template
+3. Update your cluster name and authentication settings as needed
+
+## Cleanup
+
+```bash
+terraform destroy
+```
+
+**Note**: This will destroy the gateway and the custom IAM role.

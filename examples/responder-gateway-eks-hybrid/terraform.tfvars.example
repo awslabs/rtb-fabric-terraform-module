@@ -1,0 +1,26 @@
+# RTB Fabric Responder Gateway EKS Hybrid Example Configuration
+# 
+# SETUP INSTRUCTIONS:
+# 1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+# 2. Edit terraform.tfvars with your specific values
+# 3. Run: terraform init && terraform plan && terraform apply
+
+# REQUIRED: Your EKS cluster name
+# This cluster will be used for auto-discovery of VPC, subnets, and security groups
+cluster_name = "my-bidder-cluster"
+
+# OPTIONAL: IAM role name for Kubernetes provider authentication
+# Leave null to use current AWS credentials for EKS access
+# The full ARN will be constructed as: arn:aws:iam::{current_account_id}:role/{role_name}
+kubernetes_auth_role_name = null
+# kubernetes_auth_role_name = "MyEKSAccessRole"
+
+# NOTE: This is a "hybrid" example that demonstrates custom IAM role creation.
+# The example creates its own RTB Fabric EKS Service Discovery Role with
+# custom naming and tags, while still using auto-discovery for networking.
+#
+# Network configuration (VPC, subnets, security groups) is auto-discovered
+# from your EKS cluster tags. No manual network configuration is needed.
+#
+# Application settings (port 8080, HTTP protocol, "bidder" endpoint name,
+# "default" namespace) use sensible defaults and don't need configuration.

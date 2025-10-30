@@ -5,7 +5,7 @@ output "discovered_vpc_id" {
 }
 
 output "discovered_private_subnet_ids" {
-  description = "Subnet IDs discovered from cluster tags"
+  description = "Subnet IDs discovered from cluster VPC with internal-elb tag"
   value       = data.aws_subnets.cluster_subnets.ids
 }
 

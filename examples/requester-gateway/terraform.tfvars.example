@@ -1,0 +1,20 @@
+# RTB Fabric Requester Gateway Example Configuration
+# 
+# SETUP INSTRUCTIONS:
+# 1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+# 2. Edit terraform.tfvars with your specific values
+# 3. Run: terraform init && terraform plan && terraform apply
+
+# REQUIRED: Your EKS cluster name
+# This cluster will be used for auto-discovery of VPC, subnets, and security groups
+cluster_name = "my-publisher-cluster"
+
+# NOTE: Network configuration (VPC, subnets, security groups) is auto-discovered
+# from your EKS cluster tags. No manual network configuration is needed.
+#
+# The example will automatically discover:
+# - VPC: Tagged with kubernetes.io/cluster/<cluster_name>
+# - Subnets: Tagged with kubernetes.io/role/internal-elb=1
+# - Security Group: From EKS cluster configuration
+#
+# No Kubernetes provider authentication is needed for requester gateways.

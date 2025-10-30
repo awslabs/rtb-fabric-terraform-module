@@ -1,12 +1,10 @@
 # Kubernetes Provider Configuration for E2E Test
 # This example uses the responder cluster for kubernetes provider since only the responder gateway needs EKS RBAC
-# Customize the auth_role_arn below for your authentication needs
+# Authentication is configured via kubernetes_auth_role_name variable
 
+# Construct role ARN dynamically if role name is provided
 locals {
-  # Configuration parameters - modify these as needed
-  # Note: This uses the responder cluster since that's where EKS managed endpoints are configured
-  cluster_name  = var.responder_cluster_name
-  auth_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/rtbkit-shapirov-iad-EksAccessRole-CA7FhiO8nskv"  # Example role ARN
+  auth_role_arn = var.kubernetes_auth_role_name != null ? "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.kubernetes_auth_role_name}" : null
 }
 
 provider "kubernetes" {
@@ -17,10 +15,10 @@ provider "kubernetes" {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
     args = local.auth_role_arn != null ? [
-      "eks", "get-token", "--cluster-name", local.cluster_name,
+      "eks", "get-token", "--cluster-name", var.responder_cluster_name,
       "--role-arn", local.auth_role_arn
     ] : [
-      "eks", "get-token", "--cluster-name", local.cluster_name
+      "eks", "get-token", "--cluster-name", var.responder_cluster_name
     ]
   }
 }

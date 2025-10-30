@@ -1,10 +1,12 @@
 # Kubernetes Provider Configuration for EKS
-# Customize the auth_role_arn below for your authentication needs
+# Authentication is configured via kubernetes_auth_role_name variable
 
+# Get current AWS account ID for ARN construction
+data "aws_caller_identity" "current" {}
+
+# Construct role ARN dynamically if role name is provided
 locals {
-  # Configuration parameters - modify these as needed
-  cluster_name  = var.cluster_name
-  auth_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/rtbkit-shapirov-iad-EksAccessRole-CA7FhiO8nskv"  # Example role ARN
+  auth_role_arn = var.kubernetes_auth_role_name != null ? "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.kubernetes_auth_role_name}" : null
 }
 
 provider "kubernetes" {
@@ -15,10 +17,10 @@ provider "kubernetes" {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
     args = local.auth_role_arn != null ? [
-      "eks", "get-token", "--cluster-name", local.cluster_name,
+      "eks", "get-token", "--cluster-name", var.cluster_name,
       "--role-arn", local.auth_role_arn
     ] : [
-      "eks", "get-token", "--cluster-name", local.cluster_name
+      "eks", "get-token", "--cluster-name", var.cluster_name
     ]
   }
 }
