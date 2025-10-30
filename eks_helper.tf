@@ -30,28 +30,12 @@ resource "aws_eks_access_policy_association" "rtbfabric" {
 
 
 
-# Kubernetes Provider for RBAC - uses cluster_access_role_arn if provided, otherwise current credentials
-provider "kubernetes" {
-  alias = "eks"
-
-  host                   = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null ? data.aws_eks_cluster.cluster[0].endpoint : null
-  cluster_ca_certificate = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null ? base64decode(data.aws_eks_cluster.cluster[0].certificate_authority[0].data) : null
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null ? (
-      var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_access_role_arn != null ?
-      ["eks", "get-token", "--cluster-name", data.aws_eks_cluster.cluster[0].name, "--role-arn", var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_access_role_arn] :
-      ["eks", "get-token", "--cluster-name", data.aws_eks_cluster.cluster[0].name]
-    ) : []
-  }
-}
+# Kubernetes provider configuration is provided externally by the user
+# This allows the module to work with count, for_each, and depends_on
 
 # Create namespace-scoped Role for specific endpoint access
 resource "kubernetes_role" "rtbfabric_endpoint_reader" {
-  count    = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_rbac ? 1 : 0
-  provider = kubernetes.eks
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_rbac ? 1 : 0
 
   metadata {
     namespace = var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.endpoints_resource_namespace
@@ -68,8 +52,7 @@ resource "kubernetes_role" "rtbfabric_endpoint_reader" {
 
 # Create namespace-scoped RoleBinding
 resource "kubernetes_role_binding" "rtbfabric_endpoint_reader" {
-  count    = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_rbac ? 1 : 0
-  provider = kubernetes.eks
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_rbac ? 1 : 0
 
   metadata {
     namespace = var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.endpoints_resource_namespace

@@ -1,9 +1,15 @@
 # EKS Service Discovery Role Configuration
 # This single role is assumed by RTB Fabric service and has all necessary permissions
 
-# Create EKS Service Discovery Role when not provided
+# Create EKS Service Discovery Role when not provided or when auto_create_role is true
 resource "aws_iam_role" "eks_service_discovery_role" {
-  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role == null ? 1 : 0
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && (
+    var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role == null ||
+    (
+      var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role != null &&
+      coalesce(var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_role, true) == true
+    )
+  ) ? 1 : 0
 
   name = local.eks_service_discovery_role_name
 
@@ -37,7 +43,13 @@ resource "aws_iam_role" "eks_service_discovery_role" {
 
 # Attach EKS cluster describe permissions to the service discovery role
 resource "aws_iam_role_policy" "eks_service_discovery_role_policy" {
-  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role == null ? 1 : 0
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && (
+    var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role == null ||
+    (
+      var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role != null &&
+      coalesce(var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_role, true) == true
+    )
+  ) ? 1 : 0
 
   name = "${local.eks_service_discovery_role_name}Policy"
   role = local.eks_service_discovery_role_name
@@ -61,9 +73,15 @@ resource "aws_iam_role_policy" "eks_service_discovery_role_policy" {
 # ASG Service Discovery Role Configuration
 # This single role is assumed by RTB Fabric service and has all necessary permissions for ASG discovery
 
-# Create ASG Service Discovery Role when not provided
+# Create ASG Service Discovery Role when not provided or when auto_create_role is true
 resource "aws_iam_role" "asg_service_discovery_role" {
-  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration != null && var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role == null ? 1 : 0
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration != null && (
+    var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role == null ||
+    (
+      var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role != null &&
+      coalesce(var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.auto_create_role, true) == true
+    )
+  ) ? 1 : 0
 
   name = local.asg_discovery_role_name
 
@@ -95,7 +113,13 @@ resource "aws_iam_role" "asg_service_discovery_role" {
 
 # Attach ASG discovery permissions to the service discovery role
 resource "aws_iam_role_policy" "asg_service_discovery_role_policy" {
-  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration != null && var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role == null ? 1 : 0
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration != null && (
+    var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role == null ||
+    (
+      var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role != null &&
+      coalesce(var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.auto_create_role, true) == true
+    )
+  ) ? 1 : 0
 
   name = "${local.asg_discovery_role_name}Policy"
   role = local.asg_discovery_role_name

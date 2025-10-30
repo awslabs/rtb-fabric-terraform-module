@@ -1,5 +1,25 @@
 # Local values for computed configurations
 locals {
+  # EKS role creation decision
+  should_create_eks_role = (
+    var.responder_gateway.managed_endpoint_configuration != null &&
+    var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null &&
+    (
+      var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role == null ||
+      coalesce(var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_role, true)
+    )
+  )
+  
+  # ASG role creation decision  
+  should_create_asg_role = (
+    var.responder_gateway.managed_endpoint_configuration != null &&
+    var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration != null &&
+    (
+      var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role == null ||
+      coalesce(var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.auto_create_role, true)
+    )
+  )
+
   # EKS Service Discovery Role name - use provided role name or default
   eks_service_discovery_role_name = var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null ? (
     var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role != null ?

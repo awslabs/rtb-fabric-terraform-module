@@ -15,34 +15,136 @@ This module creates AWS RTB Fabric resources using Cloud Control APIs with GA sc
 - **EKS Discovery Role**: Automatically creates RTBFabricEKSDiscoveryRole with minimal permissions for Kubernetes API access
 - **Customizable Role Names**: Supports custom naming for EKS Discovery Role to meet enterprise naming conventions
 
-## EKS Service Discovery Role Requirements
+## Role Management for Managed Endpoints
 
-When using EKS managed endpoints, you need an EKS Service Discovery Role that RTB Fabric service can assume. The module supports three configuration approaches:
+When using managed endpoints (EKS or ASG), RTB Fabric service requires IAM roles to discover and access your infrastructure. The module provides flexible role management with the `auto_create_role` parameter, suitable for both development and production environments.
 
 ### Prerequisites
 
+For **EKS managed endpoints**:
 - **EKS Cluster**: Must support **EKS access entries** (API or API_AND_CONFIG_MAP authentication mode)
   - ⚠️ **ConfigMap-only mode is not supported** - the cluster must be configured to use access entries
 - **Kubernetes Endpoint**: Target endpoint resource must exist in the specified namespace
 
-### 1. Automatic Setup (Recommended for Development)
-Don't specify `eks_service_discovery_role`. Set `auto_create_access = true` and `auto_create_rbac = true`. The module will:
-- Check if EKS Service Discovery Role already exists
-- Use existing role if found, otherwise create new role with RTB Fabric service trust relationship
-- Create EKS access entries for the role
-- Create Kubernetes RBAC resources for endpoint access
+For **ASG managed endpoints**:
+- **Auto Scaling Groups**: Must exist and be accessible in the target AWS account
+- **EC2 Instances**: Must be running and accessible for endpoint discovery
 
-**Note:** The module automatically handles existing roles. If the role exists but lacks proper permissions, you may need to specify `eks_service_discovery_role` parameter for manual control.
+### Role Auto-Creation (`auto_create_role`)
 
-### 2. Hybrid Setup (Recommended for Staging)
-Specify existing `eks_service_discovery_role = "MyExistingRole"`. Set `auto_create_access = true` and `auto_create_rbac = true`. The module will:
-- Use your existing role (must have RTB Fabric trust relationship)
-- Attach the AmazonEKSViewPolicy to your role
-- Create EKS access entries for your role
-- Create Kubernetes RBAC resources for endpoint access
+The `auto_create_role` parameter controls whether the module creates IAM roles or assumes they already exist. This feature is **production-ready** and allows customers to specify custom role names while maintaining security best practices.
 
-### 3. Manual Setup (Recommended for Production)
-Specify existing `eks_service_discovery_role = "MyExistingRole"`. Set `auto_create_access = false` and `auto_create_rbac = false`. You must pre-configure:
+#### 1. Automatic Role Creation (Default - Production Ready)
+Set `auto_create_role = true` (default) and optionally specify a custom role name. The module will:
+- Create the specified role with proper RTB Fabric service trust relationships
+- Attach required permissions (EKS: `eks:DescribeCluster`, ASG: ASG discovery permissions)
+- Handle role naming conflicts gracefully with clear error messages
+
+```hcl
+managed_endpoint_configuration = {
+  eks_endpoints_configuration = {
+    # Custom role name for your environment
+    eks_service_discovery_role = "MyCompany-RTBFabric-EKS-Role"
+    auto_create_role          = true  # Creates the role (default)
+    # ... other configuration
+  }
+}
+```
+
+#### 2. Use Existing Roles (Compliance/Hybrid Setup)
+Set `auto_create_role = false` when roles must be created through your organization's compliance processes. The module will:
+- Assume the specified role already exists
+- Validate the role has proper trust relationships and permissions
+- Provide clear error messages if configuration is missing
+
+```hcl
+managed_endpoint_configuration = {
+  eks_endpoints_configuration = {
+    eks_service_discovery_role = "PreCreated-RTBFabric-Role"
+    auto_create_role          = false  # Use existing role
+    # ... other configuration
+  }
+}
+```
+
+#### 3. Default Role Names (Simplified Setup)
+Don't specify a role name. The module will use default names and create them automatically:
+- EKS: `RTBFabricEKSDiscoveryRole` (customizable via `rtbfabric_eks_discovery_role_name`)
+- ASG: `RTBFabricAsgDiscoveryRole` (customizable via `rtbfabric_asg_discovery_role_name`)
+
+### EKS Configuration Approaches
+
+#### Automatic Setup with Custom Role (Recommended)
+```hcl
+managed_endpoint_configuration = {
+  eks_endpoints_configuration = {
+    endpoints_resource_name      = "bidder-service"
+    endpoints_resource_namespace = "production"
+    cluster_name                 = "prod-eks-cluster"
+    # Custom role name with auto-creation
+    eks_service_discovery_role   = "MyCompany-RTBFabric-EKS-Role"
+    auto_create_role            = true   # Create the role
+    auto_create_access          = true   # Create EKS access entries
+    auto_create_rbac            = true   # Create Kubernetes RBAC
+  }
+}
+```
+
+#### Hybrid Setup (Custom Role, Auto EKS/RBAC)
+```hcl
+managed_endpoint_configuration = {
+  eks_endpoints_configuration = {
+    # Use existing role, but auto-configure EKS access and RBAC
+    eks_service_discovery_role = "PreExisting-RTBFabric-Role"
+    auto_create_role          = false  # Role exists
+    auto_create_access        = true   # Auto-create EKS access
+    auto_create_rbac          = true   # Auto-create RBAC
+    # ... other configuration
+  }
+}
+```
+
+#### Manual Setup (Full Control)
+```hcl
+managed_endpoint_configuration = {
+  eks_endpoints_configuration = {
+    eks_service_discovery_role = "FullyManaged-RTBFabric-Role"
+    auto_create_role          = false  # Role exists
+    auto_create_access        = false  # EKS access pre-configured
+    auto_create_rbac          = false  # RBAC pre-configured
+    # ... other configuration
+  }
+}
+```
+
+### ASG Configuration Approaches
+
+#### Automatic Setup with Custom Role (Recommended)
+```hcl
+managed_endpoint_configuration = {
+  auto_scaling_groups_configuration = {
+    auto_scaling_group_name_list = ["my-asg-1", "my-asg-2"]
+    # Custom role name with auto-creation
+    asg_discovery_role = "MyCompany-RTBFabric-ASG-Role"
+    auto_create_role   = true  # Create the role (default)
+  }
+}
+```
+
+#### Use Existing Role (Compliance Setup)
+```hcl
+managed_endpoint_configuration = {
+  auto_scaling_groups_configuration = {
+    auto_scaling_group_name_list = ["my-asg-1", "my-asg-2"]
+    asg_discovery_role = "PreExisting-RTBFabric-ASG-Role"
+    auto_create_role   = false  # Use existing role
+  }
+}
+```
+
+### Required Trust Policy for Manual Setup
+
+When using `auto_create_role = false`, ensure your existing roles have the correct trust policy:
 
 1. **Trust Policy**: EKS Service Discovery Role must trust RTB Fabric service principals:
 ```json
@@ -69,15 +171,28 @@ Specify existing `eks_service_discovery_role = "MyExistingRole"`. Set `auto_crea
 
 The module will validate all requirements and provide clear error messages if anything is missing.
 
-### EKS Discovery Role Customization
-For enterprise environments with specific naming conventions, you can customize the EKS Discovery Role name:
+### Benefits of Auto-Create Role
+
+The `auto_create_role` functionality provides several advantages:
+
+**🚀 Production Ready**: Suitable for all environments, from development to production
+**🔒 Security**: Creates roles with minimal required permissions and proper trust policies
+**🏢 Enterprise Friendly**: Supports custom role names to meet organizational naming conventions
+**🔄 Conflict Resolution**: Handles role naming conflicts gracefully with clear error messages
+**🛠️ Flexibility**: Allows hybrid setups where roles are pre-created but EKS/RBAC is auto-configured
+**📋 Compliance**: Supports compliance requirements by allowing existing roles with `auto_create_role = false`
+
+### Role Naming Customization
+
+For enterprise environments with specific naming conventions, you can customize default role names:
 
 ```hcl
 module "rtb_fabric" {
   source = "github.com/shapirov103/terraform-aws-rtb-fabric"
   
-  # Custom role name following enterprise naming convention
+  # Custom default role names following enterprise naming convention
   rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
+  rtbfabric_asg_discovery_role_name = "MyCompany-RTBFabric-ASG-Discovery-Role"
   
   responder_gateway = {
     # ... other configuration
@@ -85,35 +200,108 @@ module "rtb_fabric" {
 }
 ```
 
-The role will be created with minimal permissions (`eks:DescribeCluster`) and can be referenced in your `cluster_access_role_arn` parameter.
+These names are used when role names are not explicitly specified in the managed endpoint configuration.
 
-### Terraform EKS Cluster Access
+### Kubernetes Provider Configuration
 
-When creating Kubernetes RBAC resources, Terraform needs access to the EKS cluster. You can control this access using the `cluster_access_role_arn` parameter:
+When using EKS managed endpoints, the module requires a kubernetes provider to create RBAC resources. The module supports flexible provider configuration patterns:
 
-- **Default behavior**: If `cluster_access_role_arn` is not specified, Terraform uses the current AWS credentials to access the EKS cluster
-- **Custom role**: If `cluster_access_role_arn` is specified, Terraform assumes this role to access the EKS cluster
-
-**Important**: The `cluster_access_role_arn` is only used by Terraform during resource creation and is **not used by the RTB Fabric service**. The RTB Fabric service uses the `eks_service_discovery_role` for its operations.
-
+#### Single Cluster (Default Provider)
 ```hcl
-# Get current AWS account ID
-data "aws_caller_identity" "current" {}
+# Configure kubernetes provider for your EKS cluster
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
 
-responder_gateway = {
-  managed_endpoint_configuration = {
-    eks_endpoints_configuration = {
-      # Role used by RTB Fabric service (required)
-      eks_service_discovery_role = "RTBFabricServiceRole"
-      
-      # Role used by Terraform for RBAC creation (optional)
-      cluster_access_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/TerraformEKSAccessRole"
-      
-      # Other configuration...
-    }
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "my-cluster"]
+  }
+}
+
+module "rtb_fabric" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  # Uses the default kubernetes provider above
+  responder_gateway = {
+    # ... EKS configuration
   }
 }
 ```
+
+#### Multi-Cluster (Explicit Provider Passing)
+```hcl
+# Multiple kubernetes providers for different clusters
+provider "kubernetes" {
+  alias = "cluster_a"
+  host  = data.aws_eks_cluster.cluster_a.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster_a.certificate_authority[0].data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "cluster-a"]
+  }
+}
+
+provider "kubernetes" {
+  alias = "cluster_b"
+  host  = data.aws_eks_cluster.cluster_b.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster_b.certificate_authority[0].data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "cluster-b"]
+  }
+}
+
+# Multiple responder gateways on different clusters
+module "rtb_fabric_cluster_a" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  
+  providers = {
+    kubernetes = kubernetes.cluster_a
+  }
+  
+  responder_gateway = {
+    # ... cluster A configuration
+  }
+}
+
+module "rtb_fabric_cluster_b" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  
+  providers = {
+    kubernetes = kubernetes.cluster_b
+  }
+  
+  responder_gateway = {
+    # ... cluster B configuration
+  }
+}
+```
+
+#### Authentication with IAM Roles
+```hcl
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args = [
+      "eks", "get-token", "--cluster-name", "my-cluster",
+      "--role-arn", "arn:aws:iam::123456789012:role/MyEKSAccessRole"
+    ]
+  }
+}
+```
+
+**Important Notes:**
+- **ASG examples don't need kubernetes provider** - the module handles this automatically
+- **EKS examples require kubernetes provider** - configure it to match your cluster
+- **Multi-cluster scenarios** - use explicit provider passing with aliases
+- **Authentication flexibility** - supports various AWS authentication methods
 
 ## Usage Examples
 
@@ -162,17 +350,34 @@ module "rtb_fabric" {
 }
 ```
 
-### Responder Gateway with EKS Endpoints (Automatic Setup)
+### Responder Gateway with EKS Endpoints (Auto-Create Custom Role)
 ```hcl
 # Get current AWS account ID for role ARN construction
 data "aws_caller_identity" "current" {}
+
+# EKS cluster data for kubernetes provider configuration
+data "aws_eks_cluster" "cluster" {
+  name = "my-eks-cluster"
+}
+
+# Kubernetes provider configuration for EKS cluster
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "my-eks-cluster"]
+  }
+}
 
 module "rtb_fabric" {
   source = "github.com/shapirov103/terraform-aws-rtb-fabric"
 
   responder_gateway = {
     create             = true
-    description        = "EKS responder with automatic setup"
+    description        = "EKS responder with custom auto-created role"
     vpc_id             = "vpc-00108ced4ec00636b"
     subnet_ids         = ["subnet-0e656d1ce3ba7d025", "subnet-0efd6f0427bfe0a3b"]
     security_group_ids = ["sg-050ebc8a5303a9337"]
@@ -184,10 +389,112 @@ module "rtb_fabric" {
         endpoints_resource_name      = "bidder-internal"
         endpoints_resource_namespace = "default"
         cluster_name                 = "my-eks-cluster"
-        # eks_service_discovery_role not specified - creates default role automatically
+        # Custom role name with auto-creation (production ready)
+        eks_service_discovery_role   = "MyCompany-RTBFabric-EKS-Role"
+        auto_create_role            = true   # Create the role (default)
+        auto_create_access          = true   # Auto-configure EKS access
+        auto_create_rbac            = true   # Auto-create Kubernetes RBAC
+      }
+    }
+    
+    tags = [
+      {
+        key   = "Environment"
+        value = "Production"
+      }
+    ]
+  }
+}
+```
+
+### Responder Gateway with EKS Endpoints (Use Existing Role)
+```hcl
+data "aws_caller_identity" "current" {}
+
+# EKS cluster data for kubernetes provider configuration
+data "aws_eks_cluster" "cluster" {
+  name = "prod-eks-cluster"
+}
+
+# Kubernetes provider with IAM role authentication
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args = [
+      "eks", "get-token", "--cluster-name", "prod-eks-cluster",
+      "--role-arn", "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/TerraformEKSRole"
+    ]
+  }
+}
+
+module "rtb_fabric" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+
+  responder_gateway = {
+    create             = true
+    description        = "EKS responder with existing role"
+    vpc_id             = "vpc-00108ced4ec00636b"
+    subnet_ids         = ["subnet-0e656d1ce3ba7d025", "subnet-0efd6f0427bfe0a3b"]
+    security_group_ids = ["sg-050ebc8a5303a9337"]
+    port               = 8090
+    protocol           = "HTTP"
+
+    managed_endpoint_configuration = {
+      eks_endpoints_configuration = {
+        endpoints_resource_name      = "bidder-service"
+        endpoints_resource_namespace = "production"
+        cluster_name                 = "prod-eks-cluster"
+        # Use existing role (compliance/hybrid setup)
+        eks_service_discovery_role   = "PreExisting-RTBFabric-Role"
+        auto_create_role            = false  # Role already exists
+        auto_create_access          = true   # Still auto-create EKS access entry
+        auto_create_rbac            = true   # Still auto-create RBAC
+      }
+    }
+    
+    tags = [
+      {
+        key   = "Environment"
+        value = "Production"
+      }
+    ]
+  }
+}
+```
+
+### Responder Gateway with EKS Endpoints (Default Role)
+```hcl
+data "aws_caller_identity" "current" {}
+
+module "rtb_fabric" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+
+  # Optional: Customize the default EKS Discovery Role name
+  rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
+
+  responder_gateway = {
+    create             = true
+    description        = "EKS responder with default role"
+    vpc_id             = "vpc-00108ced4ec00636b"
+    subnet_ids         = ["subnet-0e656d1ce3ba7d025", "subnet-0efd6f0427bfe0a3b"]
+    security_group_ids = ["sg-050ebc8a5303a9337"]
+    port               = 8090
+    protocol           = "HTTP"
+
+    managed_endpoint_configuration = {
+      eks_endpoints_configuration = {
+        endpoints_resource_name      = "bidder-internal"
+        endpoints_resource_namespace = "default"
+        cluster_name                 = "my-eks-cluster"
+        # eks_service_discovery_role not specified - uses default name
+        # auto_create_role = true (default) - creates the role
         cluster_access_role_arn      = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/MyEKSAccessRole"
-        auto_create_access           = true  # Automatically configure EKS access
-        auto_create_rbac             = true  # Automatically create Kubernetes RBAC
+        auto_create_access          = true   # Auto-configure EKS access
+        auto_create_rbac            = true   # Auto-create Kubernetes RBAC
       }
     }
     
@@ -201,37 +508,29 @@ module "rtb_fabric" {
 }
 ```
 
-### Responder Gateway with EKS Endpoints (Custom Role)
+### Responder Gateway with Auto Scaling Groups (Custom Role)
 ```hcl
-data "aws_caller_identity" "current" {}
-
 module "rtb_fabric" {
   source = "github.com/shapirov103/terraform-aws-rtb-fabric"
 
-  # Optional: Customize the EKS Discovery Role name
-  rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
-
   responder_gateway = {
     create             = true
-    description        = "EKS responder with custom role"
+    description        = "ASG responder with custom role"
     vpc_id             = "vpc-00108ced4ec00636b"
-    subnet_ids         = ["subnet-0e656d1ce3ba7d025", "subnet-0efd6f0427bfe0a3b"]
+    subnet_ids         = ["subnet-0e656d1ce3ba7d025"]
     security_group_ids = ["sg-050ebc8a5303a9337"]
-    port               = 8090
+    port               = 8080
     protocol           = "HTTP"
 
     managed_endpoint_configuration = {
-      eks_endpoints_configuration = {
-        endpoints_resource_name      = "bidder-service"
-        endpoints_resource_namespace = "production"
-        cluster_name                 = "prod-eks-cluster"
-        eks_service_discovery_role   = "MyExistingRTBFabricRole"  # Use existing role
-        cluster_access_role_arn      = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/TerraformEKSRole"
-        auto_create_access           = true  # Still auto-create EKS access entry
-        auto_create_rbac             = true  # Still auto-create RBAC
+      auto_scaling_groups_configuration = {
+        auto_scaling_group_name_list = ["my-asg-1", "my-asg-2"]
+        # Custom role name with auto-creation (production ready)
+        asg_discovery_role = "MyCompany-RTBFabric-ASG-Role"
+        auto_create_role   = true  # Create the role (default)
       }
     }
-    
+
     tags = [
       {
         key   = "Environment"
@@ -242,17 +541,14 @@ module "rtb_fabric" {
 }
 ```
 
-### Responder Gateway with Auto Scaling Groups
+### Responder Gateway with Auto Scaling Groups (Existing Role)
 ```hcl
 module "rtb_fabric" {
   source = "github.com/shapirov103/terraform-aws-rtb-fabric"
 
-  # Optional: Customize the ASG Discovery Role name
-  rtbfabric_asg_discovery_role_name = "MyCompany-RTBFabric-ASG-Discovery-Role"
-
   responder_gateway = {
     create             = true
-    description        = "ASG responder gateway"
+    description        = "ASG responder with existing role"
     vpc_id             = "vpc-00108ced4ec00636b"
     subnet_ids         = ["subnet-0e656d1ce3ba7d025"]
     security_group_ids = ["sg-050ebc8a5303a9337"]
@@ -262,8 +558,9 @@ module "rtb_fabric" {
     managed_endpoint_configuration = {
       auto_scaling_groups_configuration = {
         auto_scaling_group_name_list = ["my-asg-1", "my-asg-2"]
-        # asg_discovery_role not specified - uses default RTBFabricAsgDiscoveryRole
-        # auto_create_role = true (default) - automatically creates the role
+        # Use existing role (compliance setup)
+        asg_discovery_role = "PreExisting-RTBFabric-ASG-Role"
+        auto_create_role   = false  # Role already exists
       }
     }
 
@@ -271,6 +568,41 @@ module "rtb_fabric" {
       {
         key   = "Environment"
         value = "Production"
+      }
+    ]
+  }
+}
+```
+
+### Responder Gateway with Auto Scaling Groups (Default Role)
+```hcl
+module "rtb_fabric" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+
+  # Optional: Customize the default ASG Discovery Role name
+  rtbfabric_asg_discovery_role_name = "MyCompany-RTBFabric-ASG-Discovery-Role"
+
+  responder_gateway = {
+    create             = true
+    description        = "ASG responder with default role"
+    vpc_id             = "vpc-00108ced4ec00636b"
+    subnet_ids         = ["subnet-0e656d1ce3ba7d025"]
+    security_group_ids = ["sg-050ebc8a5303a9337"]
+    port               = 8080
+    protocol           = "HTTP"
+
+    managed_endpoint_configuration = {
+      auto_scaling_groups_configuration = {
+        auto_scaling_group_name_list = ["my-asg-1", "my-asg-2"]
+        # asg_discovery_role not specified - uses default name
+        # auto_create_role = true (default) - creates the role
+      }
+    }
+
+    tags = [
+      {
+        key   = "Environment"
+        value = "Development"
       }
     ]
   }
@@ -473,6 +805,43 @@ make help
 **Environment Variables:**
 - `AWS_PROFILE` - AWS profile to use (default: `shapirov+2-Admin`)
 
+## Troubleshooting
+
+### Common Auto-Create Role Issues
+
+#### Role Already Exists Error
+```
+Error: creating IAM Role (MyCustomRole): EntityAlreadyExists: Role with name MyCustomRole already exists
+```
+**Solution**: Set `auto_create_role = false` to use the existing role, or choose a different role name.
+
+#### Role Not Found Error
+```
+Error: reading IAM Role (MyCustomRole): couldn't find resource
+```
+**Solution**: Either set `auto_create_role = true` to create the role, or ensure the role exists in your AWS account.
+
+#### Trust Policy Validation Failed
+```
+ERROR: EKS Service Discovery Role trust policy validation failed
+```
+**Solution**: When using `auto_create_role = false`, ensure your existing role trusts the RTB Fabric service principals:
+- `rtbfabric.amazonaws.com`
+- `rtbfabric-endpoints.amazonaws.com`
+
+#### Permission Denied on Role Creation
+```
+Error: creating IAM Role: AccessDenied: User is not authorized to perform: iam:CreateRole
+```
+**Solution**: Ensure your AWS credentials have IAM permissions to create roles, or use `auto_create_role = false` with pre-created roles.
+
+### Best Practices
+
+1. **Use Custom Role Names**: Specify meaningful role names that follow your organization's naming conventions
+2. **Environment-Specific Names**: Include environment identifiers in role names to avoid conflicts
+3. **Hybrid Approach**: Use `auto_create_role = false` for roles but `auto_create_access = true` for EKS/RBAC automation
+4. **Testing**: Use unique role names in development/testing environments to avoid conflicts
+
 ## Contributing
 
 ### Before Submitting PRs
@@ -526,9 +895,26 @@ For local development and security scanning:
 | Name | Description | Type | Default |
 |------|-------------|------|---------|
 | requester_gateway | Requester RTB Fabric gateway configuration | object | {} |
-| responder_gateway | Responder RTB Fabric gateway configuration | object | {} |
+| responder_gateway | Responder RTB Fabric gateway configuration with auto_create_role support | object | {} |
 | link | RTB Fabric link configuration | object | {} |
-| rtbfabric_eks_discovery_role_name | Name for the RTB Fabric EKS Discovery Role (created when eks_service_discovery_role is not provided) | string | "RTBFabricEKSDiscoveryRole" |
+| rtbfabric_eks_discovery_role_name | Name for the RTB Fabric EKS Discovery Role (used when eks_service_discovery_role is not provided) | string | "RTBFabricEKSDiscoveryRole" |
+| rtbfabric_asg_discovery_role_name | Name for the RTB Fabric ASG Discovery Role (used when asg_discovery_role is not provided) | string | "RTBFabricAsgDiscoveryRole" |
+
+### Key Configuration Parameters
+
+#### EKS Managed Endpoints
+| Parameter | Description | Type | Default |
+|-----------|-------------|------|---------|
+| eks_service_discovery_role | Custom role name for RTB Fabric service to assume | string | null (uses default name) |
+| auto_create_role | Whether to create the eks_service_discovery_role or assume it exists | bool | true |
+| auto_create_access | Whether to create EKS access entries automatically | bool | true |
+| auto_create_rbac | Whether to create Kubernetes RBAC resources automatically | bool | true |
+
+#### ASG Managed Endpoints
+| Parameter | Description | Type | Default |
+|-----------|-------------|------|---------|
+| asg_discovery_role | Custom role name for RTB Fabric service to assume | string | null (uses default name) |
+| auto_create_role | Whether to create the asg_discovery_role or assume it exists | bool | true |
 
 ## Outputs
 

@@ -13,7 +13,7 @@ data "aws_caller_identity" "current" {}
 
 # Use shared EKS cluster discovery logic
 module "cluster_discovery" {
-  source = "../common"
+  source       = "../common"
   cluster_name = var.cluster_name
 }
 
@@ -49,9 +49,11 @@ resource "aws_iam_role" "rtb_fabric_eks_role" {
 
 module "rtb_fabric" {
   source = "../../"
-
+  providers = {
+    kubernetes = kubernetes.responder
+  }
   responder_gateway = {
-    create             = true
+    create = true
     # Replace hyphens with spaces to comply with GA API schema pattern ^[A-Za-z0-9 ]+$
     description        = "terraform responder gateway hybrid for ${replace(var.cluster_name, "-", " ")}"
     vpc_id             = module.cluster_discovery.discovered_vpc_id
@@ -66,7 +68,6 @@ module "rtb_fabric" {
         endpoints_resource_namespace = "default"
         cluster_name                 = var.cluster_name
         eks_service_discovery_role   = aws_iam_role.rtb_fabric_eks_role.name # Use the role created above
-        # cluster_access_role_arn    = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/TerraformEKSAccessRole" # Optional: Custom role for Terraform EKS access
         auto_create_access           = true                                  # But still auto-create EKS access entry
         auto_create_rbac             = true                                  # And auto-create RBAC
       }

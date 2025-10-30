@@ -66,9 +66,9 @@ variable "responder_gateway" {
         cluster_api_server_ca_certificate_chain = optional(string)
         # Module-specific fields (not part of GA API)
         eks_service_discovery_role = optional(string) # Role name (not ARN) for RTB Fabric service to assume; creates default if not provided
-        cluster_access_role_arn    = optional(string) # Role ARN for Terraform to assume when creating EKS RBAC resources; uses current credentials if not provided
         auto_create_access         = optional(bool, true)
         auto_create_rbac           = optional(bool, true)
+        auto_create_role           = optional(bool, true) # Controls whether to create the eks_service_discovery_role or assume it exists
       }))
     }))
     tags = optional(list(object({
@@ -140,14 +140,16 @@ variable "responder_gateway" {
     error_message = "eks_service_discovery_role must be a valid IAM role name (1-64 characters, start with letter, alphanumeric and _+=,.@- allowed)"
   }
 
+
+
   validation {
     condition = (
       var.responder_gateway.managed_endpoint_configuration == null ||
       var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration == null ||
-      var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_access_role_arn == null ||
-      can(regex("^arn:aws:iam::[0-9]{12}:role/.+$", var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.cluster_access_role_arn))
+      var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_role == null ||
+      can(tobool(var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_role))
     )
-    error_message = "cluster_access_role_arn must be a valid IAM role ARN (arn:aws:iam::ACCOUNT:role/ROLE_NAME)"
+    error_message = "auto_create_role must be a boolean value (true or false)"
   }
 
   validation {
@@ -170,6 +172,16 @@ variable "responder_gateway" {
       can(regex("^[a-zA-Z][a-zA-Z0-9_+=,.@-]{0,63}$", var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role))
     )
     error_message = "asg_discovery_role must be a valid IAM role name (1-64 characters, start with letter, alphanumeric and _+=,.@- allowed)"
+  }
+
+  validation {
+    condition = (
+      var.responder_gateway.managed_endpoint_configuration == null ||
+      var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration == null ||
+      var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.auto_create_role == null ||
+      can(tobool(var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.auto_create_role))
+    )
+    error_message = "auto_create_role must be a boolean value (true or false)"
   }
 
   validation {

@@ -5,12 +5,12 @@
 variable "cluster_name" {
   description = "Name of the EKS cluster to discover VPC and networking resources from"
   type        = string
-  default     = "my-eks-cluster"
+  default     = "rtbkit-shapirov-iad"
 }
 
 # Use shared EKS cluster discovery logic
 module "cluster_discovery" {
-  source = "../common"
+  source       = "../common"
   cluster_name = var.cluster_name
 }
 
@@ -78,7 +78,7 @@ module "rtb_fabric" {
   rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
 
   responder_gateway = {
-    create             = true
+    create = true
     # Replace hyphens with spaces to comply with GA API schema pattern ^[A-Za-z0-9 ]+$
     description        = "terraform responder gateway manual for ${replace(var.cluster_name, "-", " ")}"
     vpc_id             = module.cluster_discovery.discovered_vpc_id
@@ -92,9 +92,10 @@ module "rtb_fabric" {
         endpoints_resource_name      = "bidder"
         endpoints_resource_namespace = "default"
         cluster_name                 = var.cluster_name
-        eks_service_discovery_role   = aws_iam_role.rtb_fabric_eks_role.name  # Use the pre-configured role created above
-        auto_create_access           = false  # Role already has EKS access configured
-        auto_create_rbac             = false  # RBAC already configured manually
+        eks_service_discovery_role   = aws_iam_role.rtb_fabric_eks_role.name # Use the pre-configured role created above
+        auto_create_access           = false                                 # Role already has EKS access configured
+        auto_create_rbac             = false                                 # RBAC already configured manually
+        auto_create_role             = false
       }
     }
 
@@ -116,12 +117,6 @@ module "rtb_fabric" {
 
   # The role and all permissions are pre-configured above
   # The module will NOT create any additional resources since auto_create_* = false
-  depends_on = [
-    aws_iam_role.rtb_fabric_eks_role,
-    aws_iam_role_policy_attachment.rtb_fabric_eks_view_policy,
-    aws_eks_access_entry.rtb_fabric_manual,
-    aws_eks_access_policy_association.rtb_fabric_manual
-  ]
 }
 
 # Main gateway outputs

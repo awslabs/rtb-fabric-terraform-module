@@ -18,3 +18,13 @@ output "cluster_name_used" {
   description = "Cluster name used for resource discovery"
   value       = var.cluster_name
 }
+
+output "discovered_cluster_endpoint" {
+  description = "EKS cluster endpoint for Kubernetes provider configuration"
+  value       = data.aws_eks_cluster.cluster.endpoint
+}
+
+output "discovered_cluster_ca_certificate" {
+  description = "EKS cluster CA certificate for Kubernetes provider configuration"
+  value       = data.aws_eks_cluster.cluster.certificate_authority[0].data
+}

@@ -33,6 +33,11 @@ module "rtb_fabric" {
   # Optional: Customize the EKS Discovery Role name for enterprise naming conventions
   # rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
 
+  # Note: This example demonstrates auto_create_role functionality:
+  # - When auto_create_role = true (default): Creates the specified role name
+  # - When auto_create_role = false: Assumes the role already exists
+  # - When eks_service_discovery_role is null: Uses default role name and creates it
+
   # Requester Gateway
   requester_gateway = {
     create = true
@@ -53,6 +58,9 @@ module "rtb_fabric" {
     ]
   }
 
+  providers = {
+    kubernetes =  kubernetes.responder
+  }
   # EKS Responder Gateway
   responder_gateway = {
     create = true
@@ -69,12 +77,13 @@ module "rtb_fabric" {
         endpoints_resource_name      = "bidder-internal"
         endpoints_resource_namespace = "default"
         cluster_name                 = var.responder_cluster_name
-        # eks_service_discovery_role not specified - will create default role automatically
+        # Custom role name with auto-creation enabled to avoid conflicts
+        eks_service_discovery_role = "E2ETest-${var.responder_cluster_name}-EKSDiscoveryRole"
+        auto_create_role           = true
         # cluster_access_role_arn if not specified - will use current Terraform credentials
         cluster_access_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/rtbkit-shapirov-iad-EksAccessRole-CA7FhiO8nskv"
         auto_create_access      = true
         auto_create_rbac        = true
-
         # cluster_api_server_endpoint_uri automatically retrieved
         # cluster_api_server_ca_certificate_chain automatically retrieved
       }

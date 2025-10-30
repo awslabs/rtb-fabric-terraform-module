@@ -20,6 +20,9 @@ module "rtb_fabric" {
   # Optional: Customize the EKS Discovery Role name for enterprise naming conventions
   # rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
 
+  providers = {
+    kubernetes = kubernetes.responder
+  }
   responder_gateway = {
     create = true
     # Replace hyphens with spaces to comply with GA API schema pattern ^[A-Za-z0-9 ]+$
@@ -37,9 +40,8 @@ module "rtb_fabric" {
         cluster_name                 = var.cluster_name
         # eks_service_discovery_role not specified - will create default role automatically
         # cluster_access_role_arn if not specified - will use current Terraform credentials
-        cluster_access_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/rtbkit-shapirov-iad-EksAccessRole-CA7FhiO8nskv"
-        auto_create_access      = true
-        auto_create_rbac        = true
+        auto_create_access = true
+        auto_create_rbac   = true
 
         # cluster_api_server_endpoint_uri automatically retrieved
         # cluster_api_server_ca_certificate_chain automatically retrieved

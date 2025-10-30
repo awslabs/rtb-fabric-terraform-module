@@ -1,68 +1,137 @@
 # Implementation Plan
 
-- [x] 1. Update variable definitions and validation
-  - Replace HeimdallAssumeRole references with customer role configuration
-  - Add customer_role_arn parameter to eks_endpoints_configuration
-  - Update variable validation rules for new role model
-  - Remove legacy heimdall variable references
-  - _Requirements: 1.4, 6.4_
+## Phase 1: Provider Architecture Modernization
 
-- [x] 2. Refactor role management logic in locals.tf
-  - Remove default_heimdall_role_arn logic
-  - Update eks_role_arn computation to use customer-provided role
-  - Add validation for customer role ARN format
-  - _Requirements: 1.4, 1.1_
+- [ ] 1. Update provider requirements and configuration
+- [x] 1.1 Update versions.tf to support external kubernetes provider
+  - Add `configuration_aliases = [kubernetes]` to kubernetes provider requirements
+  - Ensure backward compatibility with default provider usage
+  - _Requirements: 1.1, 2.1_
 
-- [x] 3. Update EKS access management in eks_helper.tf
-  - Replace heimdall resource names with rtbfabric naming
-  - Update EKS access entry creation to use customer role ARN
-  - Modify access policy association to use customer role
-  - Update conditional logic for auto_create_access flag
-  - _Requirements: 2.4, 3.3, 6.1, 6.3_
+- [x] 1.2 Remove internal kubernetes provider from eks_helper.tf
+  - Remove the `provider "kubernetes"` block from eks_helper.tf
+  - Update kubernetes resources to use provided/default provider
+  - Remove provider alias references from kubernetes resources
+  - _Requirements: 1.1, 2.2_
 
-- [x] 4. Update Kubernetes RBAC resources
-  - Rename kubernetes_role from heimdall-endpoint-reader to rtbfabric-endpoint-reader
-  - Rename kubernetes_role_binding to use rtbfabric naming
-  - Update role subject to use customer role ARN
-  - Modify conditional logic for auto_create_rbac flag
-  - _Requirements: 2.5, 3.4, 3.5, 6.1_
+- [x] 1.3 Update kubernetes resource provider references
+  - Remove explicit `provider = kubernetes.eks` from kubernetes_role resource
+  - Remove explicit `provider = kubernetes.eks` from kubernetes_role_binding resource
+  - Allow resources to use default or passed provider configuration
+  - _Requirements: 2.2_
 
-- [x] 5. Add customer role validation data sources
-  - Create data source to fetch customer role details
-  - Add validation for trust policy principals (rtbfabric.amazonaws.com, rtbfabric-endpoints.amazonaws.com)
-  - Add validation for AmazonEKSViewPolicy attachment
-  - Implement validation checks for manual setup mode
-  - _Requirements: 1.5, 2.2, 5.1, 5.2_
+## Phase 2: Variable Interface Simplification
 
-- [x] 6. Implement role configuration for automatic mode
-  - Add IAM role policy attachment for AmazonEKSViewPolicy
-  - Create trust policy configuration for RTB Fabric service principals
-  - Add conditional resource creation based on auto_create_access flag
-  - _Requirements: 3.1, 3.2, 1.1, 1.2_
+- [ ] 2. Remove cluster_access_role_arn parameter and logic
+- [x] 2.1 Update eks_endpoints_configuration variable structure
+  - Remove `cluster_access_role_arn` parameter from eks_endpoints_configuration
+  - Remove related validation rules for cluster_access_role_arn
+  - Update variable documentation to reflect kubernetes provider responsibility
+  - _Requirements: 2.1, 2.2_
 
-- [x] 7. Add comprehensive error handling and validation
-  - Implement validation checks with clear error messages
-  - Add remediation guidance for common configuration issues
-  - Create validation for EKS cluster access in manual mode
-  - Add RBAC permission validation for manual setup
-  - _Requirements: 5.3, 5.4, 5.5_
+- [x] 2.2 Remove cluster_access_role_arn logic from eks_helper.tf
+  - Remove conditional logic that uses cluster_access_role_arn in provider configuration
+  - Simplify kubernetes provider usage to rely on external configuration
+  - _Requirements: 2.2_
 
-- [x] 8. Update responder.tf resource configuration
-  - Ensure RoleArn in EksEndpointsConfiguration uses customer role
-  - Update conditional logic to handle customer role ARN properly
-  - Verify integration with updated locals.tf logic
-  - _Requirements: 1.1, 2.3_
+- [x] 2.3 Update variable validation rules
+  - Remove cluster_access_role_arn validation regex
+  - Keep other eks_endpoints_configuration validations intact
+  - _Requirements: 2.1_
 
-- [x] 9. Migrate existing examples to new role model
-  - Update examples that use eks_endpoints_configuration
-  - Create example showing manual setup with pre-configured role
-  - Create example showing automatic setup with role configuration
-  - Add example trust policy configurations
-  - _Requirements: 4.1, 4.2, 4.3, 4.5_
+## Phase 3: Validation Simplification
 
-- [x] 10. Update documentation and variable descriptions
-  - Replace Heimdall terminology with RTB Fabric in all descriptions
-  - Update variable documentation to reflect new role model
-  - Add guidance for trust policy configuration
-  - Document migration path from HeimdallAssumeRole
-  - _Requirements: 6.5, 4.4_
+- [ ] 3. Remove kubernetes-specific validations
+- [x] 3.1 Disable kubernetes access validation in validation.tf
+  - Remove or disable aws_eks_access_entry data source validation
+  - Remove kubernetes access validation null_resource
+  - Keep IAM trust policy validation only
+  - _Requirements: 5.1, 5.2_
+
+- [x] 3.2 Remove kubernetes validation from data.tf
+  - Keep data sources disabled (already done)
+  - Remove any remaining kubernetes-specific validation logic
+  - Focus validation on RTB Fabric IAM concerns only
+  - _Requirements: 5.1_
+
+- [ ]* 3.3 Update validation error messages
+  - Update error messages to reflect simplified validation scope
+  - Remove references to kubernetes access validation
+  - _Requirements: 5.5_
+
+## Phase 4: Legacy Cleanup
+
+- [ ] 4. Replace Heimdall terminology with RTBFabric
+- [x] 4.1 Update resource names in eks_helper.tf
+  - Change kubernetes_role name from "heimdall-*" to "rtbfabric-endpoint-reader"
+  - Change kubernetes_role_binding name from "heimdall-*" to "rtbfabric-endpoint-reader"
+  - Update resource descriptions and comments
+  - _Requirements: 6.1, 6.3_
+
+- [x] 4.2 Update variable names and descriptions
+  - Replace any remaining "heimdall" references with "rtbfabric"
+  - Update variable descriptions to use RTB Fabric terminology
+  - _Requirements: 6.4, 6.5_
+
+- [x] 4.3 Remove HeimdallAssumeRole default role logic
+  - Remove any remaining HeimdallAssumeRole creation or references
+  - Ensure all role creation uses RTBFabric naming conventions
+  - _Requirements: 1.4_
+
+## Phase 5: Example Updates
+
+- [ ] 5. Update all EKS examples with external kubernetes provider
+- [x] 5.1 Update examples/responder-gateway-eks-manual/main.tf
+  - Add kubernetes provider configuration block
+  - Use cluster discovery outputs for provider configuration
+  - Remove depends_on from module call (if still present)
+  - Add providers block to module call
+  - _Requirements: 2.1, 2.2, 4.1_
+
+- [x] 5.2 Update examples/responder-gateway-eks/main.tf
+  - Add kubernetes provider configuration block
+  - Configure provider with cluster_access_role_arn if specified
+  - Add providers block to module call
+  - _Requirements: 2.1, 2.2, 4.2_
+
+- [x] 5.3 Update examples/responder-gateway-eks-hybrid/main.tf
+  - Add kubernetes provider configuration block
+  - Add providers block to module call
+  - Remove depends_on from module call
+  - _Requirements: 2.1, 2.2, 4.1_
+
+- [x] 5.4 Update examples/e2e-test/main.tf for multi-cluster support
+  - Add kubernetes provider configuration for responder cluster
+  - Add providers block to module call
+  - Demonstrate multi-cluster provider pattern
+  - _Requirements: 2.1, 2.2, 4.2_
+
+- [x] 5.5 Update examples/common/outputs.tf
+  - Add cluster endpoint and CA certificate outputs
+  - Support kubernetes provider configuration in examples
+  - _Requirements: 4.2_
+
+## Phase 6: Testing and Validation
+
+- [ ] 6. Validate updated examples and functionality
+- [ ] 6.1 Test single-cluster examples
+  - Verify terraform plan works for all single-cluster examples
+  - Test with different kubernetes provider authentication methods
+  - _Requirements: 2.1, 2.2_
+
+- [ ] 6.2 Test multi-cluster example (e2e-test)
+  - Verify e2e-test example works with separate kubernetes provider
+  - Test provider alias functionality
+  - _Requirements: 2.1, 2.2_
+
+- [ ]* 6.3 Test provider flexibility scenarios
+  - Test with default kubernetes provider (no alias)
+  - Test with aliased kubernetes provider
+  - Test with different authentication methods
+  - _Requirements: 2.1, 2.2_
+
+- [ ]* 6.4 Validate no regression in RTB Fabric functionality
+  - Verify all RTB Fabric resources are created correctly
+  - Test role creation and configuration
+  - Test EKS access entry and RBAC creation
+  - _Requirements: 1.1, 1.2, 1.3, 2.3, 2.4_
