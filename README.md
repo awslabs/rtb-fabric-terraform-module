@@ -470,6 +470,23 @@ module "rtb_fabric" {
 ```hcl
 data "aws_caller_identity" "current" {}
 
+# EKS cluster data for kubernetes provider configuration
+data "aws_eks_cluster" "cluster" {
+  name = "my-eks-cluster"
+}
+
+# Kubernetes provider configuration
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "my-eks-cluster"]
+  }
+}
+
 module "rtb_fabric" {
   source = "github.com/shapirov103/terraform-aws-rtb-fabric"
 
@@ -492,7 +509,6 @@ module "rtb_fabric" {
         cluster_name                 = "my-eks-cluster"
         # eks_service_discovery_role not specified - uses default name
         # auto_create_role = true (default) - creates the role
-        cluster_access_role_arn      = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/MyEKSAccessRole"
         auto_create_access          = true   # Auto-configure EKS access
         auto_create_rbac            = true   # Auto-create Kubernetes RBAC
       }
@@ -603,6 +619,119 @@ module "rtb_fabric" {
       {
         key   = "Environment"
         value = "Development"
+      }
+    ]
+  }
+}
+```
+
+### Multi-Cluster EKS Deployment
+```hcl
+# Data sources for multiple clusters
+data "aws_eks_cluster" "production" {
+  name = "prod-eks-cluster"
+}
+
+data "aws_eks_cluster" "staging" {
+  name = "staging-eks-cluster"
+}
+
+# Kubernetes providers for different clusters
+provider "kubernetes" {
+  alias = "production"
+  host  = data.aws_eks_cluster.production.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.production.certificate_authority[0].data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "prod-eks-cluster"]
+  }
+}
+
+provider "kubernetes" {
+  alias = "staging"
+  host  = data.aws_eks_cluster.staging.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.staging.certificate_authority[0].data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", "staging-eks-cluster"]
+  }
+}
+
+# Production responder gateway
+module "rtb_fabric_production" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+
+  providers = {
+    kubernetes = kubernetes.production
+  }
+
+  responder_gateway = {
+    create             = true
+    description        = "Production EKS responder gateway"
+    vpc_id             = "vpc-prod123"
+    subnet_ids         = ["subnet-prod1", "subnet-prod2"]
+    security_group_ids = ["sg-prod123"]
+    port               = 8080
+    protocol           = "HTTPS"
+
+    managed_endpoint_configuration = {
+      eks_endpoints_configuration = {
+        endpoints_resource_name      = "bidder-service"
+        endpoints_resource_namespace = "production"
+        cluster_name                 = "prod-eks-cluster"
+        eks_service_discovery_role   = "Production-RTBFabric-EKS-Role"
+        auto_create_role            = true
+        auto_create_access          = true
+        auto_create_rbac            = true
+      }
+    }
+
+    tags = [
+      {
+        key   = "Environment"
+        value = "Production"
+      }
+    ]
+  }
+}
+
+# Staging responder gateway
+module "rtb_fabric_staging" {
+  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+
+  providers = {
+    kubernetes = kubernetes.staging
+  }
+
+  responder_gateway = {
+    create             = true
+    description        = "Staging EKS responder gateway"
+    vpc_id             = "vpc-staging123"
+    subnet_ids         = ["subnet-staging1", "subnet-staging2"]
+    security_group_ids = ["sg-staging123"]
+    port               = 8080
+    protocol           = "HTTP"
+
+    managed_endpoint_configuration = {
+      eks_endpoints_configuration = {
+        endpoints_resource_name      = "bidder-service"
+        endpoints_resource_namespace = "staging"
+        cluster_name                 = "staging-eks-cluster"
+        eks_service_discovery_role   = "Staging-RTBFabric-EKS-Role"
+        auto_create_role            = true
+        auto_create_access          = true
+        auto_create_rbac            = true
+      }
+    }
+
+    tags = [
+      {
+        key   = "Environment"
+        value = "Staging"
       }
     ]
   }
@@ -909,6 +1038,8 @@ For local development and security scanning:
 | auto_create_role | Whether to create the eks_service_discovery_role or assume it exists | bool | true |
 | auto_create_access | Whether to create EKS access entries automatically | bool | true |
 | auto_create_rbac | Whether to create Kubernetes RBAC resources automatically | bool | true |
+
+**Note**: The `cluster_access_role_arn` parameter has been removed. Kubernetes provider authentication is now configured externally for better flexibility and multi-cluster support.
 
 #### ASG Managed Endpoints
 | Parameter | Description | Type | Default |
