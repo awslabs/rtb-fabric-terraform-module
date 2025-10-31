@@ -11,7 +11,6 @@ This module creates AWS RTB Fabric resources using Cloud Control APIs with GA sc
 ## Key Features
 
 - **GA Schema Support**: Uses the latest RTB Fabric GA API schema
-- **Customer Role Model**: Supports customer-managed IAM roles with RTB Fabric service trust relationships
 - **Automatic Configuration**: Can automatically configure customer role trust policies and EKS permissions
 - **Manual Setup Support**: Validates pre-configured customer roles for production environments
 - **EKS Integration**: Native support for EKS managed endpoints with RBAC automation
