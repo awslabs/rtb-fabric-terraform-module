@@ -1,5 +1,8 @@
 # Terraform AWS RTB Fabric Module
 
+[![Version](https://img.shields.io/github/v/release/awslabs/rtb-fabric-terraform-module)](https://github.com/awslabs/rtb-fabric-terraform-module/releases)
+[![License](https://img.shields.io/github/license/awslabs/rtb-fabric-terraform-module)](LICENSE)
+
 This module creates AWS RTB Fabric resources using Cloud Control APIs with GA schema support. It supports creating:
 - Requester RTB Fabric Gateways
 - Responder RTB Fabric Gateways (with managed EKS endpoints and customer role support)
@@ -18,6 +21,30 @@ This module creates AWS RTB Fabric resources using Cloud Control APIs with GA sc
 ## Role Management for Managed Endpoints
 
 When using managed endpoints (EKS or ASG), RTB Fabric service requires IAM roles to discover and access your infrastructure. The module provides flexible role management with the `auto_create_role` parameter, suitable for both development and production environments.
+
+## Installation
+
+### Using Pinned Version (Recommended)
+```hcl
+module "rtb_fabric" {
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  
+  # Your configuration here
+  requester_gateway = {
+    create = true
+    # ... configuration
+  }
+}
+```
+
+### Using Latest Version
+```hcl
+module "rtb_fabric" {
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
+  
+  # Your configuration here
+}
+```
 
 ### Prerequisites
 
@@ -188,7 +215,7 @@ For enterprise environments with specific naming conventions, you can customize 
 
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
   
   # Custom default role names following enterprise naming convention
   rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
@@ -221,7 +248,7 @@ provider "kubernetes" {
 }
 
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
   # Uses the default kubernetes provider above
   responder_gateway = {
     # ... EKS configuration
@@ -256,7 +283,7 @@ provider "kubernetes" {
 
 # Multiple responder gateways on different clusters
 module "rtb_fabric_cluster_a" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
   
   providers = {
     kubernetes = kubernetes.cluster_a
@@ -268,7 +295,7 @@ module "rtb_fabric_cluster_a" {
 }
 
 module "rtb_fabric_cluster_b" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
   
   providers = {
     kubernetes = kubernetes.cluster_b
@@ -308,7 +335,7 @@ provider "kubernetes" {
 ### Requester Gateway Only
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   requester_gateway = {
     create             = true
@@ -329,7 +356,7 @@ module "rtb_fabric" {
 ### Basic Responder Gateway
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   responder_gateway = {
     create             = true
@@ -373,7 +400,7 @@ provider "kubernetes" {
 }
 
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   responder_gateway = {
     create             = true
@@ -432,7 +459,7 @@ provider "kubernetes" {
 }
 
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   responder_gateway = {
     create             = true
@@ -488,7 +515,7 @@ provider "kubernetes" {
 }
 
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   # Optional: Customize the default EKS Discovery Role name
   rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
@@ -527,7 +554,7 @@ module "rtb_fabric" {
 ### Responder Gateway with Auto Scaling Groups (Custom Role)
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   responder_gateway = {
     create             = true
@@ -560,7 +587,7 @@ module "rtb_fabric" {
 ### Responder Gateway with Auto Scaling Groups (Existing Role)
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   responder_gateway = {
     create             = true
@@ -593,7 +620,7 @@ module "rtb_fabric" {
 ### Responder Gateway with Auto Scaling Groups (Default Role)
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   # Optional: Customize the default ASG Discovery Role name
   rtbfabric_asg_discovery_role_name = "MyCompany-RTBFabric-ASG-Discovery-Role"
@@ -663,7 +690,7 @@ provider "kubernetes" {
 
 # Production responder gateway
 module "rtb_fabric_production" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   providers = {
     kubernetes = kubernetes.production
@@ -701,7 +728,7 @@ module "rtb_fabric_production" {
 
 # Staging responder gateway
 module "rtb_fabric_staging" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   providers = {
     kubernetes = kubernetes.staging
@@ -741,7 +768,7 @@ module "rtb_fabric_staging" {
 ### RTB Fabric Link
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   link = {
     create                 = true
@@ -798,7 +825,7 @@ module "rtb_fabric" {
 ### Complete Setup with Link
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   requester_gateway = {
     create             = true
@@ -834,7 +861,7 @@ module "rtb_fabric" {
 
 # Separate module instance for the link
 module "rtb_fabric_link" {
-  source = "github.com/shapirov103/terraform-aws-rtb-fabric"
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
 
   link = {
     create          = true
