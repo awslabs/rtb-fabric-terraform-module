@@ -54,6 +54,7 @@ resource "aws_cloudcontrolapi_resource" "link" {
         module.version != null ? { Version = module.version } : {},
         module.depends_on != null ? { DependsOn = module.depends_on } : {},
         # Build ModuleParameters based on module_type (oneOf constraint)
+        # Only include ModuleParameters if we have valid parameters for the specified type
         module.module_type == "NoBid" && module.no_bid_parameters != null ? {
           ModuleParameters = {
             NoBid = merge(
@@ -62,29 +63,35 @@ resource "aws_cloudcontrolapi_resource" "link" {
               module.no_bid_parameters.pass_through_percentage != null ? { PassThroughPercentage = module.no_bid_parameters.pass_through_percentage } : {}
             )
           }
-        } : {},
-        module.module_type == "OpenRtbAttribute" && module.open_rtb_attribute_parameters != null ? {
+          } : module.module_type == "OpenRtbAttribute" && module.open_rtb_attribute_parameters != null ? {
           ModuleParameters = {
-            OpenRtbAttribute = {
-              FilterType = module.open_rtb_attribute_parameters.filter_type
-              FilterConfiguration = [for filter in module.open_rtb_attribute_parameters.filter_configuration : {
-                Criteria = [for criterion in filter.criteria : {
-                  Path   = criterion.path
-                  Values = criterion.values
+            OpenRtbAttribute = merge(
+              {
+                FilterType = module.open_rtb_attribute_parameters.filter_type
+                FilterConfiguration = [for filter in module.open_rtb_attribute_parameters.filter_configuration : {
+                  Criteria = [for criterion in filter.criteria : {
+                    Path   = criterion.path
+                    Values = criterion.values
+                  }]
                 }]
-              }]
-              Action = module.open_rtb_attribute_parameters.action_type == "NoBid" && module.open_rtb_attribute_parameters.no_bid_action != null ? {
-                NoBid = merge(
-                  module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code != null ? { NoBidReasonCode = module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code } : {}
-                )
+                HoldbackPercentage = module.open_rtb_attribute_parameters.holdback_percentage
+              },
+              # Only include Action if we have valid action parameters
+              module.open_rtb_attribute_parameters.action_type == "NoBid" && module.open_rtb_attribute_parameters.no_bid_action != null ? {
+                Action = {
+                  NoBid = merge(
+                    module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code != null ? { NoBidReasonCode = module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code } : {}
+                  )
+                }
                 } : module.open_rtb_attribute_parameters.action_type == "HeaderTag" && module.open_rtb_attribute_parameters.header_tag_action != null ? {
-                HeaderTag = {
-                  Name  = module.open_rtb_attribute_parameters.header_tag_action.name
-                  Value = module.open_rtb_attribute_parameters.header_tag_action.value
+                Action = {
+                  HeaderTag = {
+                    Name  = module.open_rtb_attribute_parameters.header_tag_action.name
+                    Value = module.open_rtb_attribute_parameters.header_tag_action.value
+                  }
                 }
               } : {}
-              HoldbackPercentage = module.open_rtb_attribute_parameters.holdback_percentage
-            }
+            )
           }
         } : {}
       )]
