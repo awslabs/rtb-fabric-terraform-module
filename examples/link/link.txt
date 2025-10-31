@@ -1,2 +1,8 @@
-https://rtb-gw-8ju4h75ashssqk806puaj2dow.929819487611.gateway.rtbfabric.us-east-1.amazonaws.com/link/link-66ne133u4a1bhd8swjqr80ygd/bidrequest
-https://rtb-gw-3zwrud7l2ur18bp4plzmpg98q.929819487611.gateway.rtbfabric.us-east-1.amazonaws.com/link/link-bdxiot12nlng9t7sf9ac7wy7q/bridrequest
+https://rtb-gw-8ju4h75ashssqk806puaj2dow.929819487611.gateway.rtbfabric.us-east-1.amazonaws.com/link/link-66ne133u4a1bhd8swjqr80ygd/bidrequestt
+https://rtb-gw-6uk7k64ru78nq1j3jipjl0wsu.929819487611.gateway.rtbfabric.us-east-1.amazonaws.com/link/link-ebchw3ordq8vzyrf9rrkuwl4p/bidrequest
+
+rtb-gw-6uk7k64ru78nq1j3jipjl0wsu - requester
+rtb-gw-7h9smo5pp1rp61b1yqke2v8ej
+link-ebchw3ordq8vzyrf9rrkuwl4p
+
+aws rtbfabric accept-link --link-id link-ebchw3ordq8vzyrf9rrkuwl4p --gateway-id rtb-gw-7h9smo5pp1rp61b1yqke2v8ej --log-settings '{"applicationLogs": {"sampling": {"errorLog": 20, "filterLog": 20}}}'

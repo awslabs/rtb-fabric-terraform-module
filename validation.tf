@@ -17,16 +17,9 @@ resource "null_resource" "validate_service_discovery_role_trust_policy" {
 # Note: EKS policy validation is skipped to avoid unsupported data source issues
 # Users should ensure AmazonEKSViewPolicy is attached when auto_create_access = false
 
-# Check for EKS cluster access in manual mode
-# Note: This validation is disabled to avoid issues when the role is created in the same Terraform configuration
-data "aws_eks_access_entry" "service_discovery_role_access" {
-  count         = 0  # Disabled to avoid dependency issues
-  cluster_name  = "dummy-cluster-name"
-  principal_arn = "arn:aws:iam::123456789012:role/dummy-role"
-}
 
 resource "null_resource" "validate_service_discovery_role_eks_access" {
-  count = 0  # Disabled to avoid dependency issues when role is created in same configuration
+  count = 0 # Disabled to avoid dependency issues when role is created in same configuration
 
   triggers = {
     service_discovery_role_arn = ""

@@ -30,14 +30,14 @@ This example creates an RTB Fabric responder gateway with EKS managed endpoints 
 
 ### Optional Variables
 
-- `kubernetes_auth_role_arn`: IAM role for Kubernetes authentication (uses current AWS credentials if not specified)
+- `kubernetes_auth_role_name`: IAM role name for Kubernetes authentication (uses current AWS credentials if not specified)
 
 ### Example Configuration
 
 ```hcl
 # terraform.tfvars
 cluster_name = "my-bidder-cluster"
-kubernetes_auth_role_arn = "arn:aws:iam::123456789012:role/MyEKSAccessRole"
+kubernetes_auth_role_name = "MyEKSAccessRole"
 ```
 
 ## What Makes This "Hybrid"
@@ -54,9 +54,20 @@ This example demonstrates a hybrid approach to IAM role management:
 
 This example automatically discovers networking configuration from your EKS cluster:
 
-- **VPC**: Tagged with `kubernetes.io/cluster/<cluster_name>`
-- **Subnets**: Tagged with `kubernetes.io/role/internal-elb=1`
-- **Security Group**: From EKS cluster configuration
+### Requirements for Auto-Discovery
+
+**EKS Cluster:**
+- Must exist and be accessible with the specified cluster name
+- Your AWS credentials must have `eks:DescribeCluster` permission
+
+**Subnet Tags (Optional):**
+- `kubernetes.io/role/internal-elb = 1` (for private subnets used by internal load balancers)
+- If no subnets have this tag, you may need to add it to your private subnets
+
+### What Gets Discovered
+- **VPC**: Retrieved directly from EKS cluster configuration
+- **Subnets**: Private subnets in the cluster's VPC tagged with `kubernetes.io/role/internal-elb=1`
+- **Security Group**: Cluster security group from EKS cluster configuration
 
 ## IAM Role Management
 
@@ -82,7 +93,7 @@ The following settings use sensible defaults:
 The example supports two authentication modes:
 
 1. **Current AWS Credentials** (default): Uses your current AWS CLI/SDK credentials
-2. **IAM Role**: Set `kubernetes_auth_role_arn` to assume a specific role for EKS access
+2. **IAM Role**: Set `kubernetes_auth_role_name` to assume a specific role for EKS access (ARN will be constructed automatically)
 
 ## When to Use This Example
 
@@ -100,9 +111,8 @@ This example is suitable when:
 If you see auto-discovery errors:
 
 1. Verify your EKS cluster exists and is accessible
-2. Check that your VPC has the tag: `kubernetes.io/cluster/<cluster_name> = owned` or `shared`
-3. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
-4. Verify your AWS credentials have EKS permissions
+2. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
+3. Verify your AWS credentials have EKS permissions
 
 ### IAM Role Issues
 

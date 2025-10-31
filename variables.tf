@@ -100,7 +100,7 @@ variable "responder_gateway" {
   }
 
   validation {
-    condition = var.responder_gateway.domain_name == null || can(regex("^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))+$", var.responder_gateway.domain_name))
+    condition     = var.responder_gateway.domain_name == null || can(regex("^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))+$", var.responder_gateway.domain_name))
     error_message = "domain_name must be a valid domain name format."
   }
 
@@ -244,10 +244,10 @@ variable "link" {
     }))
     # GA schema ModuleConfigurationList - use module_type to specify which type
     module_configuration_list = optional(list(object({
-      name         = string
-      version      = optional(string)
-      depends_on   = optional(list(string))
-      module_type  = string # "NoBid" or "OpenRtbAttribute"
+      name        = string
+      version     = optional(string)
+      depends_on  = optional(list(string))
+      module_type = string # "NoBid" or "OpenRtbAttribute"
       # NoBid module parameters (only used when module_type = "NoBid")
       no_bid_parameters = optional(object({
         reason                  = optional(string)
@@ -307,7 +307,7 @@ variable "link" {
   }
 
   validation {
-    condition = !var.link.create || var.link.link_log_settings != null
+    condition     = !var.link.create || var.link.link_log_settings != null
     error_message = "LinkLogSettings is required when creating a link."
   }
 
@@ -322,18 +322,18 @@ variable "link" {
   }
 
   validation {
-    condition = var.link.link_attributes == null || var.link.link_attributes.responder_error_masking == null || length(var.link.link_attributes.responder_error_masking) <= 200
+    condition     = var.link.link_attributes == null || var.link.link_attributes.responder_error_masking == null || length(var.link.link_attributes.responder_error_masking) <= 200
     error_message = "Maximum of 200 responder error masking rules allowed."
   }
 
   validation {
-    condition = var.link.module_configuration_list == null || length(var.link.module_configuration_list) >= 0
+    condition     = var.link.module_configuration_list == null || length(var.link.module_configuration_list) >= 0
     error_message = "ModuleConfigurationList must be a valid list."
   }
 
   validation {
     condition = var.link.module_configuration_list == null || alltrue([
-      for module in var.link.module_configuration_list : 
+      for module in var.link.module_configuration_list :
       contains(["NoBid", "OpenRtbAttribute"], module.module_type)
     ])
     error_message = "module_type must be either 'NoBid' or 'OpenRtbAttribute'."
@@ -341,7 +341,7 @@ variable "link" {
 
   validation {
     condition = var.link.module_configuration_list == null || alltrue([
-      for module in var.link.module_configuration_list : 
+      for module in var.link.module_configuration_list :
       (module.module_type == "NoBid" && module.no_bid_parameters != null) ||
       (module.module_type == "OpenRtbAttribute" && module.open_rtb_attribute_parameters != null)
     ])
@@ -350,8 +350,8 @@ variable "link" {
 
   validation {
     condition = var.link.module_configuration_list == null || alltrue([
-      for module in var.link.module_configuration_list : 
-      module.open_rtb_attribute_parameters == null || 
+      for module in var.link.module_configuration_list :
+      module.open_rtb_attribute_parameters == null ||
       contains(["NoBid", "HeaderTag"], module.open_rtb_attribute_parameters.action_type)
     ])
     error_message = "When using OpenRtbAttribute, action_type must be either 'NoBid' or 'HeaderTag'."

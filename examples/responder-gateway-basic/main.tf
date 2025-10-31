@@ -44,10 +44,10 @@ output "gateway_domain_name" {
 output "configuration_summary" {
   description = "Summary of configuration sources used"
   value = {
-    vpc_source = "manual"
-    subnet_source = "manual"
+    vpc_source            = "manual"
+    subnet_source         = "manual"
     security_group_source = "manual"
-    domain_name_source = "manual"
+    domain_name_source    = "manual"
   }
 }
 
@@ -55,9 +55,9 @@ output "configuration_summary" {
 output "used_values" {
   description = "Final configuration values used in deployment"
   value = {
-    vpc_id = var.vpc_id
-    subnet_ids = var.subnet_ids
+    vpc_id             = var.vpc_id
+    subnet_ids         = var.subnet_ids
     security_group_ids = var.security_group_ids
-    domain_name = var.domain_name
+    domain_name        = var.domain_name
   }
 }

@@ -31,7 +31,7 @@ This example creates a complete end-to-end RTB Fabric setup with requester gatew
 
 ### Optional Variables
 
-- `kubernetes_auth_role_arn`: IAM role for Kubernetes authentication (uses current AWS credentials if not specified)
+- `kubernetes_auth_role_name`: IAM role name for Kubernetes authentication (uses current AWS credentials if not specified)
 
 ### Example Configuration
 
@@ -39,7 +39,7 @@ This example creates a complete end-to-end RTB Fabric setup with requester gatew
 # terraform.tfvars
 requester_cluster_name = "my-publisher-cluster"
 responder_cluster_name = "my-bidder-cluster"
-kubernetes_auth_role_arn = "arn:aws:iam::123456789012:role/MyEKSAccessRole"
+kubernetes_auth_role_name = "MyEKSAccessRole"
 ```
 
 ## What This Example Creates
@@ -53,9 +53,20 @@ kubernetes_auth_role_arn = "arn:aws:iam::123456789012:role/MyEKSAccessRole"
 
 This example automatically discovers networking configuration from both EKS clusters:
 
-- **VPC**: Tagged with `kubernetes.io/cluster/<cluster_name>`
-- **Subnets**: Tagged with `kubernetes.io/role/internal-elb=1`
-- **Security Groups**: From EKS cluster configurations
+### Requirements for Auto-Discovery
+
+**EKS Clusters:**
+- Both clusters must exist and be accessible with the specified cluster names
+- Your AWS credentials must have `eks:DescribeCluster` permission
+
+**Subnet Tags (Optional):**
+- `kubernetes.io/role/internal-elb = 1` (for private subnets used by internal load balancers)
+- If no subnets have this tag, you may need to add it to your private subnets
+
+### What Gets Discovered
+- **VPCs**: Retrieved directly from both EKS cluster configurations
+- **Subnets**: Private subnets in each cluster's VPC tagged with `kubernetes.io/role/internal-elb=1`
+- **Security Groups**: Cluster security groups from both EKS cluster configurations
 
 ## Application Configuration
 
@@ -72,7 +83,7 @@ The following settings use sensible defaults for E2E testing:
 The Kubernetes provider (used for the responder gateway) supports:
 
 1. **Current AWS Credentials** (default): Uses your current AWS CLI/SDK credentials
-2. **IAM Role**: Set `kubernetes_auth_role_arn` to assume a specific role for EKS access
+2. **IAM Role**: Set `kubernetes_auth_role_name` to assume a specific role for EKS access (ARN will be constructed automatically)
 
 ## Troubleshooting
 
@@ -81,9 +92,8 @@ The Kubernetes provider (used for the responder gateway) supports:
 If you see auto-discovery errors for either cluster:
 
 1. Verify both EKS clusters exist and are accessible
-2. Check that VPCs have the tag: `kubernetes.io/cluster/<cluster_name> = owned` or `shared`
-3. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
-4. Verify your AWS credentials have EKS permissions for both clusters
+2. Ensure subnets have the tag: `kubernetes.io/role/internal-elb = 1`
+3. Verify your AWS credentials have EKS permissions for both clusters
 
 ### Kubernetes Provider Issues
 
@@ -91,7 +101,7 @@ If you see Kubernetes authentication errors:
 
 1. Verify your AWS credentials can access the responder cluster
 2. Check that the responder cluster has API access enabled
-3. Consider setting `kubernetes_auth_role_arn` if using cross-account or role-based access
+3. Consider setting `kubernetes_auth_role_name` if using cross-account or role-based access
 
 ## Testing the E2E Setup
 

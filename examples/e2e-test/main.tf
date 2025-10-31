@@ -17,20 +17,20 @@ module "responder_cluster_discovery" {
 
 # Validate auto-discovery results for both clusters
 locals {
-  requester_vpc_discovery_failed = length(module.requester_cluster_discovery.discovered_vpc_id) == 0
+  requester_vpc_discovery_failed    = length(module.requester_cluster_discovery.discovered_vpc_id) == 0
   requester_subnet_discovery_failed = length(module.requester_cluster_discovery.discovered_private_subnet_ids) == 0
-  responder_vpc_discovery_failed = length(module.responder_cluster_discovery.discovered_vpc_id) == 0
+  responder_vpc_discovery_failed    = length(module.responder_cluster_discovery.discovered_vpc_id) == 0
   responder_subnet_discovery_failed = length(module.responder_cluster_discovery.discovered_private_subnet_ids) == 0
-  
+
   discovery_failed = local.requester_vpc_discovery_failed || local.requester_subnet_discovery_failed || local.responder_vpc_discovery_failed || local.responder_subnet_discovery_failed
-  
+
   discovery_error_message = local.discovery_failed ? "Auto-discovery failed for one or more clusters. Please verify: 1) Clusters '${var.requester_cluster_name}' and '${var.responder_cluster_name}' exist, 2) VPCs are tagged with 'kubernetes.io/cluster/<cluster_name>', 3) Subnets are tagged with 'kubernetes.io/role/internal-elb=1'." : ""
 }
 
 # Validation resource to provide clear error messages
 resource "null_resource" "discovery_validation" {
   count = local.discovery_failed ? 1 : 0
-  
+
   provisioner "local-exec" {
     command = "echo 'ERROR: ${local.discovery_error_message}' && exit 1"
   }
@@ -69,7 +69,7 @@ module "rtb_fabric" {
   }
 
   providers = {
-    kubernetes =  kubernetes.responder
+    kubernetes = kubernetes.responder
   }
   # EKS Responder Gateway
   responder_gateway = {
@@ -298,15 +298,15 @@ output "responder_discovered_security_group_id" {
 output "configuration_summary" {
   description = "Summary of configuration sources used"
   value = {
-    requester_cluster_name_source = "variable"
-    responder_cluster_name_source = "variable"
-    requester_vpc_source = "auto-discovery"
-    requester_subnet_source = "auto-discovery"
+    requester_cluster_name_source   = "variable"
+    responder_cluster_name_source   = "variable"
+    requester_vpc_source            = "auto-discovery"
+    requester_subnet_source         = "auto-discovery"
     requester_security_group_source = "auto-discovery"
-    responder_vpc_source = "auto-discovery"
-    responder_subnet_source = "auto-discovery"
+    responder_vpc_source            = "auto-discovery"
+    responder_subnet_source         = "auto-discovery"
     responder_security_group_source = "auto-discovery"
-    authentication_source = var.kubernetes_auth_role_name != null ? "role-based" : "current-credentials"
+    authentication_source           = var.kubernetes_auth_role_name != null ? "role-based" : "current-credentials"
   }
 }
 
@@ -314,13 +314,13 @@ output "configuration_summary" {
 output "used_values" {
   description = "Final configuration values used in deployment"
   value = {
-    requester_cluster_name = var.requester_cluster_name
-    responder_cluster_name = var.responder_cluster_name
-    requester_vpc_id = module.requester_cluster_discovery.discovered_vpc_id
-    requester_subnet_ids = module.requester_cluster_discovery.discovered_private_subnet_ids
+    requester_cluster_name       = var.requester_cluster_name
+    responder_cluster_name       = var.responder_cluster_name
+    requester_vpc_id             = module.requester_cluster_discovery.discovered_vpc_id
+    requester_subnet_ids         = module.requester_cluster_discovery.discovered_private_subnet_ids
     requester_security_group_ids = [module.requester_cluster_discovery.discovered_security_group_id]
-    responder_vpc_id = module.responder_cluster_discovery.discovered_vpc_id
-    responder_subnet_ids = module.responder_cluster_discovery.discovered_private_subnet_ids
+    responder_vpc_id             = module.responder_cluster_discovery.discovered_vpc_id
+    responder_subnet_ids         = module.responder_cluster_discovery.discovered_private_subnet_ids
     responder_security_group_ids = [module.responder_cluster_discovery.discovered_security_group_id]
   }
 }

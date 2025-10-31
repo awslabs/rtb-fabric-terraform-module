@@ -32,10 +32,10 @@ resource "aws_iam_role" "eks_service_discovery_role" {
   description = "RTB Fabric EKS Service Discovery Role - assumed by RTB Fabric service for EKS access"
 
   tags = {
-    Name                        = local.eks_service_discovery_role_name
-    Purpose                     = "RTB Fabric EKS Service Discovery"
-    ManagedBy                   = "Terraform"
-    RTBFabricManagedEndpoint    = "true"
+    Name                     = local.eks_service_discovery_role_name
+    Purpose                  = "RTB Fabric EKS Service Discovery"
+    ManagedBy                = "Terraform"
+    RTBFabricManagedEndpoint = "true"
   }
 }
 
@@ -104,10 +104,10 @@ resource "aws_iam_role" "asg_service_discovery_role" {
   description = "RTB Fabric ASG Service Discovery Role - assumed by RTB Fabric service for ASG access"
 
   tags = {
-    Name                        = local.asg_discovery_role_name
-    Purpose                     = "RTB Fabric ASG Service Discovery"
-    ManagedBy                   = "Terraform"
-    RTBFabricManagedEndpoint    = "true"
+    Name                     = local.asg_discovery_role_name
+    Purpose                  = "RTB Fabric ASG Service Discovery"
+    ManagedBy                = "Terraform"
+    RTBFabricManagedEndpoint = "true"
   }
 }
 

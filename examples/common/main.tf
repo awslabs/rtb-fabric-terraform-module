@@ -9,7 +9,7 @@ data "aws_eks_cluster" "cluster" {
 
 # Extract VPC ID directly from EKS cluster configuration
 locals {
-  cluster_vpc_id = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
+  cluster_vpc_id            = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
   cluster_security_group_id = data.aws_eks_cluster.cluster.vpc_config[0].cluster_security_group_id
 }
 

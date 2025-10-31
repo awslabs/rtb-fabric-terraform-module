@@ -3,7 +3,7 @@
 variable "vpc_id" {
   description = "VPC ID where the responder gateway will be deployed"
   type        = string
-  
+
   validation {
     condition     = can(regex("^vpc-[0-9a-f]{8,17}$", var.vpc_id))
     error_message = "VPC ID must be a valid AWS VPC identifier (vpc-xxxxxxxx)."
@@ -13,12 +13,12 @@ variable "vpc_id" {
 variable "subnet_ids" {
   description = "List of subnet IDs where the responder gateway will be deployed"
   type        = list(string)
-  
+
   validation {
     condition     = length(var.subnet_ids) > 0
     error_message = "At least one subnet ID must be provided."
   }
-  
+
   validation {
     condition = alltrue([
       for subnet_id in var.subnet_ids : can(regex("^subnet-[0-9a-f]{8,17}$", subnet_id))
@@ -30,12 +30,12 @@ variable "subnet_ids" {
 variable "security_group_ids" {
   description = "List of security group IDs for the responder gateway"
   type        = list(string)
-  
+
   validation {
     condition     = length(var.security_group_ids) > 0
     error_message = "At least one security group ID must be provided."
   }
-  
+
   validation {
     condition = alltrue([
       for sg_id in var.security_group_ids : can(regex("^sg-[0-9a-f]{8,17}$", sg_id))
@@ -47,7 +47,7 @@ variable "security_group_ids" {
 variable "domain_name" {
   description = "Domain name for the responder gateway (e.g., load balancer DNS name)"
   type        = string
-  
+
   validation {
     condition     = length(var.domain_name) > 0
     error_message = "Domain name must not be empty."

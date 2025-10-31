@@ -16,7 +16,7 @@ resource "aws_cloudcontrolapi_resource" "link" {
             FilterLog = var.link.link_log_settings.application_logs.link_application_log_sampling.filter_log
           }
         }
-      } : {
+        } : {
         ApplicationLogs = {
           LinkApplicationLogSampling = {
             ErrorLog  = 0
@@ -46,7 +46,7 @@ resource "aws_cloudcontrolapi_resource" "link" {
       )
     } : {},
     # Support for new ModuleConfigurationList with GA schema structure
-    var.link.module_configuration_list != null ? { 
+    var.link.module_configuration_list != null ? {
       ModuleConfigurationList = [for module in var.link.module_configuration_list : merge(
         {
           Name = module.name
@@ -77,7 +77,7 @@ resource "aws_cloudcontrolapi_resource" "link" {
                 NoBid = merge(
                   module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code != null ? { NoBidReasonCode = module.open_rtb_attribute_parameters.no_bid_action.no_bid_reason_code } : {}
                 )
-              } : module.open_rtb_attribute_parameters.action_type == "HeaderTag" && module.open_rtb_attribute_parameters.header_tag_action != null ? {
+                } : module.open_rtb_attribute_parameters.action_type == "HeaderTag" && module.open_rtb_attribute_parameters.header_tag_action != null ? {
                 HeaderTag = {
                   Name  = module.open_rtb_attribute_parameters.header_tag_action.name
                   Value = module.open_rtb_attribute_parameters.header_tag_action.value
