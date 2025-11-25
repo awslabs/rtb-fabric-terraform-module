@@ -112,7 +112,7 @@ module "rtb_fabric" {
 
 # Separate module for the link to use gateway IDs from the first module
 module "rtb_fabric_link" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.0"  # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.0" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
 
   # Link between Requester and EKS Responder
   link = {
