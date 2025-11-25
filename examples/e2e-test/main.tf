@@ -38,7 +38,7 @@ resource "null_resource" "discovery_validation" {
 
 # Single module instance for complete E2E test: Requester + EKS Responder + Link
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "../.." # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
 
   # Optional: Customize the EKS Discovery Role name for enterprise naming conventions
   # rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
@@ -108,12 +108,11 @@ module "rtb_fabric" {
       }
     ]
   }
-
 }
 
 # Separate module for the link to use gateway IDs from the first module
 module "rtb_fabric_link" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "../.." # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
 
   # Link between Requester and EKS Responder
   link = {
@@ -144,58 +143,8 @@ module "rtb_fabric_link" {
       }
     }
 
-    # GA schema ModuleConfigurationList - using discriminated union approach
-    module_configuration_list = [
-      {
-        name        = "E2ETestNoBidModule"
-        version     = "v1"
-        module_type = "NoBid"
-        no_bid_parameters = {
-          reason                  = "E2ETestReason"
-          reason_code             = 2
-          pass_through_percentage = 5.0
-        }
-      },
-      {
-        name        = "E2ETestOpenRtbModule"
-        version     = "v1"
-        module_type = "OpenRtbAttribute"
-        open_rtb_attribute_parameters = {
-          filter_type = "EXCLUDE"
-          filter_configuration = [
-            {
-              criteria = [
-                {
-                  path   = "imp[0].banner.h"
-                  values = ["250", "600"]
-                }
-              ]
-            }
-          ]
-          action_type = "HeaderTag"
-          header_tag_action = {
-            name  = "X-E2E-Test"
-            value = "banner-height-filtered"
-          }
-          holdback_percentage = 10.0
-        }
-      }
-    ]
-
-    tags = [
-      {
-        key   = "Environment"
-        value = "E2ETest"
-      },
-      {
-        key   = "RequesterCluster"
-        value = var.requester_cluster_name
-      },
-      {
-        key   = "ResponderCluster"
-        value = var.responder_cluster_name
-      }
-    ]
+    # GA schema ModuleConfigurationList - matches AWS schema directly
+    #  module_configuration_list - attribute not allowed for link creation. Only applies to links that were accepted first and active. 
   }
 }
 
@@ -245,21 +194,25 @@ output "responder_gateway_domain_name" {
 output "link_id" {
   description = "ID of the created RTB fabric link"
   value       = module.rtb_fabric_link.link_id
+  sensitive   = true
 }
 
 output "link_arn" {
   description = "ARN of the created RTB fabric link"
   value       = module.rtb_fabric_link.link_arn
+  sensitive   = true
 }
 
 output "link_status" {
   description = "Status of the created RTB fabric link"
   value       = module.rtb_fabric_link.link_status
+  sensitive   = true
 }
 
 output "link_direction" {
   description = "Direction of the created RTB fabric link"
   value       = module.rtb_fabric_link.link_direction
+  sensitive   = true
 }
 
 # Requester Cluster Discovery Outputs

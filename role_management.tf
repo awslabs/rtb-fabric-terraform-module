@@ -136,7 +136,8 @@ resource "aws_iam_role_policy" "asg_service_discovery_role_policy" {
           "autoscaling:DescribeAutoScalingGroups",
           "ec2:DescribeInstanceStatus",
           "ec2:DescribeInstances",
-          "ec2:DescribeAvailabilityZones"
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeSubnets"
         ]
         Resource = "*"
       }

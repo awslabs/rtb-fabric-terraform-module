@@ -1,7 +1,7 @@
 .PHONY: deploy destroy e2e-test clean lint format fmt-diff lint-ci security tflint tfsec checkov install-tools
 
 # Default AWS profile
-AWS_PROFILE ?= shapirov+2-Admin
+AWS_PROFILE ?= default
 E2E_DIR = examples/e2e-test
 
 # Export AWS profile for all commands

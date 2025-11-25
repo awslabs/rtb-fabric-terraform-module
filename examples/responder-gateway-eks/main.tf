@@ -50,6 +50,7 @@ module "rtb_fabric" {
         cluster_name                 = var.cluster_name
         # eks_service_discovery_role not specified - will create default role automatically
         # cluster_access_role_arn if not specified - will use current Terraform credentials
+        auto_create_role   = true
         auto_create_access = true
         auto_create_rbac   = true
 

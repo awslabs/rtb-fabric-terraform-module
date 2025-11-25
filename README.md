@@ -797,16 +797,17 @@ module "rtb_fabric" {
       }
     }
 
-    # GA schema ModuleConfigurationList with discriminated union
+    # GA schema ModuleConfigurationList
     module_configuration_list = [
       {
-        name        = "TestNoBidModule"
-        version     = "v1"
-        module_type = "NoBid"
-        no_bid_parameters = {
-          reason                  = "TestReason"
-          reason_code             = 2
-          pass_through_percentage = 5.0
+        name    = "TestNoBidModule"
+        version = "v1"
+        module_parameters = {
+          no_bid = {
+            reason                  = "TestReason"
+            reason_code             = 2
+            pass_through_percentage = 5.0
+          }
         }
       }
     ]
@@ -961,6 +962,79 @@ make help
 - `AWS_PROFILE` - AWS profile to use (default: `shapirov+2-Admin`)
 
 ## Troubleshooting
+
+### Known Limitations
+
+#### Link `http_responder_allowed` Field
+
+**Issue**: The `http_responder_allowed` field is not returned by Cloud Control API after link creation, causing state drift.
+
+**Behavior**: 
+- This field is immutable (can only be set during creation)
+- Cloud Control API does not return it in GetResource responses
+- Terraform sees it as `null` in state even when set during creation
+
+**Solution**: 
+The module uses `ignore_changes` to handle this automatically. You can set this field during link creation:
+
+```hcl
+link = {
+  create                 = true
+  gateway_id             = "rtb-gw-..."
+  peer_gateway_id        = "rtb-gw-..."
+  http_responder_allowed = true  # Set on create, ignored on updates
+  # ... rest of config
+}
+```
+
+**How it works**:
+1. On **first apply**: The field is sent to AWS with your specified value
+2. On **second apply**: An `import` block in your root module refreshes the state from AWS, removing the problematic field
+3. On **subsequent applies**: Updates work without errors since the field is no longer in state
+4. You can update other fields (`tags`, `link_log_settings`, `module_configuration_list`) without issues
+
+**Requirements**:
+- Terraform 1.5+ (for `import` block support)
+- Add an `import` block in your root module (see example below)
+
+**How it works**:
+1. On **first apply**: The field is sent to AWS with your specified value
+2. **Manual cleanup required**: After creation, you must clean up the state once (see below)
+3. On **subsequent applies**: Updates work without errors
+
+**Required one-time setup after link creation**:
+
+Option 1 - Use the provided script (recommended):
+```bash
+# Run from your Terraform root module directory
+bash scripts/cleanup-link-state.sh
+```
+
+Option 2 - Manual commands:
+```bash
+# Get the link ARN
+LINK_ARN=$(terraform output -raw link_arn)
+
+# Remove and reimport to clean state
+terraform state rm 'module.rtb_fabric.awscc_rtbfabric_link.link[0]'
+terraform import 'module.rtb_fabric.awscc_rtbfabric_link.link[0]' "$LINK_ARN"
+
+# Verify
+terraform plan  # Should show no changes
+```
+
+**Why this is needed**:
+Cloud Control API doesn't return `http_responder_allowed` in responses, causing the awscc provider to attempt updates on every apply, which fail because the field is immutable. Reimporting refreshes the state without this field.
+
+**Important**: 
+- Once set, this field cannot be changed without recreating the link
+- If you need to change it, you must destroy and recreate the link resource
+
+#### Link Module Configuration - Responder Side Limitation
+
+**Current Limitation**: Link module configuration and management is currently only supported from the requester side. Module configuration cannot be managed from the responder gateway side at this time.
+
+**Status**: AWS is actively working on enabling responder-side module management support. This functionality will be available in a future release.
 
 ### Common Auto-Create Role Issues
 

@@ -1,0 +1,190 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "RTB Fabric Link CloudFormation Template - equivalent to Terraform example",
+  "Parameters": {
+    "GatewayId": {
+      "Type": "String",
+      "Default": "rtb-gw-8ju4h75ashssqk806puaj2dow",
+      "Description": "ID of the RTB gateway"
+    },
+    "PeerGatewayId": {
+      "Type": "String",
+      "Default": "rtb-gw-ewxd1zajzesqgnyrbvq6yhdhv",
+      "Description": "ID of the peer RTB gateway"
+    },
+    "CustomerProvidedId": {
+      "Type": "String",
+      "Default": "my-custom-id",
+      "Description": "Customer provided identifier for the link"
+    },
+    "Environment": {
+      "Type": "String",
+      "Default": "Production",
+      "Description": "Environment tag value"
+    }
+  },
+  "Resources": {
+    "RTBFabricLink": {
+      "Type": "AWS::RTBFabric::Link",
+      "Properties": {
+        "GatewayId": {
+          "Ref": "GatewayId"
+        },
+        "PeerGatewayId": {
+          "Ref": "PeerGatewayId"
+        },
+        "HttpResponderAllowed": true,
+        "LinkAttributes": {
+          "CustomerProvidedId": {
+            "Ref": "CustomerProvidedId"
+          },
+          "ResponderErrorMasking": [
+            {
+              "HttpCode": "400",
+              "Action": "NO_BID",
+              "LoggingTypes": [
+                "METRIC",
+                "RESPONSE"
+              ],
+              "ResponseLoggingPercentage": 10.5
+            }
+          ]
+        },
+        "LinkLogSettings": {
+          "ApplicationLogs": {
+            "LinkApplicationLogSampling": {
+              "ErrorLog": 20,
+              "FilterLog": 20
+            }
+          }
+        },
+        "ModuleConfigurationList": [
+          {
+            "Name": "NoBidModule",
+            "Version": "v1",
+            "ModuleParameters": {
+              "NoBid": {
+                "Reason": "TestReason",
+                "ReasonCode": 1,
+                "PassThroughPercentage": 10.0
+              }
+            }
+          },
+          {
+            "Name": "NoBidModule1",
+            "Version": "v1",
+            "ModuleParameters": {
+              "NoBid": {
+                "Reason": "TestReason",
+                "ReasonCode": 1,
+                "PassThroughPercentage": 10.0
+              }
+            }
+          },
+          {
+            "Name": "NoBidModule3",
+            "Version": "v1",
+            "ModuleParameters": {
+              "NoBid": {
+                "Reason": "Test3Reason",
+                "ReasonCode": 1,
+                "PassThroughPercentage": 10.0
+              }
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "LinkId": {
+      "Description": "ID of the created RTB fabric link",
+      "Value": {
+        "Ref": "RTBFabricLink"
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-LinkId"
+        }
+      }
+    },
+    "LinkArn": {
+      "Description": "ARN of the created RTB fabric link",
+      "Value": {
+        "Fn::GetAtt": [
+          "RTBFabricLink",
+          "Arn"
+        ]
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-LinkArn"
+        }
+      }
+    },
+    "LinkStatus": {
+      "Description": "Status of the created RTB fabric link",
+      "Value": {
+        "Fn::GetAtt": [
+          "RTBFabricLink",
+          "LinkStatus"
+        ]
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-LinkStatus"
+        }
+      }
+    },
+    "LinkDirection": {
+      "Description": "Direction of the created RTB fabric link",
+      "Value": {
+        "Fn::GetAtt": [
+          "RTBFabricLink",
+          "LinkDirection"
+        ]
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-LinkDirection"
+        }
+      }
+    },
+    "CreatedTimestamp": {
+      "Description": "Created timestamp of the RTB fabric link",
+      "Value": {
+        "Fn::GetAtt": [
+          "RTBFabricLink",
+          "CreatedTimestamp"
+        ]
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-CreatedTimestamp"
+        }
+      }
+    },
+    "UpdatedTimestamp": {
+      "Description": "Updated timestamp of the RTB fabric link",
+      "Value": {
+        "Fn::GetAtt": [
+          "RTBFabricLink",
+          "UpdatedTimestamp"
+        ]
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-UpdatedTimestamp"
+        }
+      }
+    }
+  }
+}

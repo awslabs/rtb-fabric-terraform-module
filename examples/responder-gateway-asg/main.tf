@@ -20,8 +20,8 @@ module "rtb_fabric" {
     managed_endpoint_configuration = {
       auto_scaling_groups_configuration = {
         auto_scaling_group_name_list = var.auto_scaling_group_names
-        # asg_discovery_role = null  # Uses default RTBFabricAsgDiscoveryRole
-        # auto_create_role = true    # Automatically creates the role (default)
+        asg_discovery_role           = "RTBFabricAsgDiscoveryRoleForTfExample" # if not specified uses default RTBFabricAsgDiscoveryRole
+        auto_create_role             = true                                    # Automatically creates the role (default)
       }
     }
 

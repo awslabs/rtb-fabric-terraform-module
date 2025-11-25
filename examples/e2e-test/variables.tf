@@ -30,3 +30,9 @@ variable "kubernetes_auth_role_name" {
     error_message = "kubernetes_auth_role_name must be a valid IAM role name (1-64 characters, start with letter, alphanumeric and _+=,.@- allowed)."
   }
 }
+
+variable "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "us-east-1"
+}

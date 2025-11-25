@@ -242,38 +242,38 @@ variable "link" {
         })
       })
     }))
-    # GA schema ModuleConfigurationList - use module_type to specify which type
+    # GA schema ModuleConfigurationList - matches AWS schema directly
     module_configuration_list = optional(list(object({
-      name        = string
-      version     = optional(string)
-      depends_on  = optional(list(string))
-      module_type = string # "NoBid" or "OpenRtbAttribute"
-      # NoBid module parameters (only used when module_type = "NoBid")
-      no_bid_parameters = optional(object({
-        reason                  = optional(string)
-        reason_code             = optional(number)
-        pass_through_percentage = optional(number)
-      }))
-      # OpenRtbAttribute module parameters (only used when module_type = "OpenRtbAttribute")
-      open_rtb_attribute_parameters = optional(object({
-        filter_type = string
-        filter_configuration = list(object({
-          criteria = list(object({
-            path   = string
-            values = list(string)
+      name       = string
+      version    = optional(string)
+      depends_on = optional(list(string))
+      module_parameters = optional(object({
+        # OneOf: either no_bid OR open_rtb_attribute
+        no_bid = optional(object({
+          reason                  = optional(string)
+          reason_code             = optional(number)
+          pass_through_percentage = optional(number)
+        }))
+        open_rtb_attribute = optional(object({
+          filter_type = optional(string)
+          filter_configuration = optional(list(object({
+            criteria = optional(list(object({
+              path   = optional(string)
+              values = optional(list(string))
+            })))
+          })))
+          action = optional(object({
+            # OneOf: either no_bid OR header_tag
+            no_bid = optional(object({
+              no_bid_reason_code = optional(number)
+            }))
+            header_tag = optional(object({
+              name  = optional(string)
+              value = optional(string)
+            }))
           }))
+          holdback_percentage = optional(number)
         }))
-        action_type = string # "NoBid" or "HeaderTag"
-        # NoBid action (only used when action_type = "NoBid")
-        no_bid_action = optional(object({
-          no_bid_reason_code = optional(number)
-        }))
-        # HeaderTag action (only used when action_type = "HeaderTag")
-        header_tag_action = optional(object({
-          name  = string
-          value = string
-        }))
-        holdback_percentage = number
       }))
     })))
     tags = optional(list(object({
@@ -306,10 +306,10 @@ variable "link" {
     error_message = "When create is true, gateway_id and peer_gateway_id are required."
   }
 
-  validation {
-    condition     = !var.link.create || var.link.link_log_settings != null
-    error_message = "LinkLogSettings is required when creating a link."
-  }
+  # validation {
+  #   condition     = !var.link.create || var.link.link_log_settings != null
+  #   error_message = "LinkLogSettings is required when creating a link."
+  # }
 
   validation {
     condition = var.link.link_log_settings == null || (
@@ -334,26 +334,30 @@ variable "link" {
   validation {
     condition = var.link.module_configuration_list == null || alltrue([
       for module in var.link.module_configuration_list :
-      contains(["NoBid", "OpenRtbAttribute"], module.module_type)
+      module.module_parameters == null || (
+        (module.module_parameters.no_bid != null && module.module_parameters.open_rtb_attribute == null) ||
+        (module.module_parameters.no_bid == null && module.module_parameters.open_rtb_attribute != null)
+      )
     ])
-    error_message = "module_type must be either 'NoBid' or 'OpenRtbAttribute'."
+    error_message = "module_parameters must contain either 'no_bid' OR 'open_rtb_attribute', not both."
   }
 
   validation {
     condition = var.link.module_configuration_list == null || alltrue([
       for module in var.link.module_configuration_list :
-      (module.module_type == "NoBid" && module.no_bid_parameters != null) ||
-      (module.module_type == "OpenRtbAttribute" && module.open_rtb_attribute_parameters != null)
+      module.module_parameters == null ||
+      module.module_parameters.open_rtb_attribute == null ||
+      module.module_parameters.open_rtb_attribute.action == null ||
+      (module.module_parameters.open_rtb_attribute.action.no_bid != null || module.module_parameters.open_rtb_attribute.action.header_tag != null)
     ])
-    error_message = "When module_type is 'NoBid', no_bid_parameters must be provided. When module_type is 'OpenRtbAttribute', open_rtb_attribute_parameters must be provided."
+    error_message = "When using open_rtb_attribute, action must contain either 'no_bid' or 'header_tag'."
   }
 
   validation {
-    condition = var.link.module_configuration_list == null || alltrue([
-      for module in var.link.module_configuration_list :
-      module.open_rtb_attribute_parameters == null ||
-      contains(["NoBid", "HeaderTag"], module.open_rtb_attribute_parameters.action_type)
-    ])
-    error_message = "When using OpenRtbAttribute, action_type must be either 'NoBid' or 'HeaderTag'."
+    condition = var.link.module_configuration_list == null || length([
+      for name in [for m in var.link.module_configuration_list : m.name] : name
+      if length([for n in [for m in var.link.module_configuration_list : m.name] : n if n == name]) > 1
+    ]) == 0
+    error_message = "Module names must be unique within the module_configuration_list."
   }
 }

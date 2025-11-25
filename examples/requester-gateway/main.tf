@@ -37,10 +37,6 @@ module "rtb_fabric" {
       {
         key   = "Environment"
         value = "Prod"
-      },
-      {
-        key   = "EKSCluster"
-        value = var.cluster_name
       }
     ]
   }
