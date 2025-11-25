@@ -26,7 +26,7 @@ When using managed endpoints (EKS or ASG), RTB Fabric service requires IAM roles
 ### Using Pinned Version (Recommended)
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.0"
   
   # Your configuration here
   requester_gateway = {

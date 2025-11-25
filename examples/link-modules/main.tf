@@ -8,10 +8,10 @@
 # be done manually through the AWS Console or CLI by the peer account.
 
 # Import the existing link that was created and accepted
-# import {
-#   to = module.rtb_fabric.awscc_rtbfabric_link.link[0]
-#   id = "arn:aws:rtbfabric:us-east-1:929819487611:gateway/rtb-gw-6x0lxq8ylrwttalz3zx8ijxda/link/link-9e96cz5s5j3a5towbf9mnofhq" # Replace with your link ARN
-# }
+import {
+  to = module.rtb_fabric.awscc_rtbfabric_link.link[0]
+  id = "arn:aws:rtbfabric:us-east-1:<ACCOUNT_ID>:gateway/<GATEWAY_ID>/link/<LINK_ID>" # Replace with your link ARN
+}
 
 module "rtb_fabric" {
   source = "../../"
