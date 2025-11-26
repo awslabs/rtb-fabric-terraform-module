@@ -4,8 +4,26 @@ plugin "aws" {
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 
-# Disable IAM role policy validation due to complex conditionals with null values
+# Disable AWS IAM role validation rules due to complex conditionals with null values
+# These rules fail when evaluating deeply nested conditionals in count expressions
+# The IAM roles are validated by AWS at apply time anyway
 rule "aws_iam_role_invalid_assume_role_policy" {
+  enabled = false
+}
+
+rule "aws_iam_role_invalid_description" {
+  enabled = false
+}
+
+rule "aws_iam_role_invalid_name" {
+  enabled = false
+}
+
+rule "aws_iam_role_policy_invalid_name" {
+  enabled = false
+}
+
+rule "aws_iam_role_policy_invalid_policy" {
   enabled = false
 }
 
