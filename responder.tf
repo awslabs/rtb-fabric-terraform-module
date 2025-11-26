@@ -43,8 +43,10 @@ resource "awscc_rtbfabric_responder_gateway" "responder_gateway" {
   depends_on = [
     aws_iam_role.eks_service_discovery_role,
     aws_iam_role_policy.eks_service_discovery_role_policy,
+    time_sleep.wait_for_eks_role_propagation,
     aws_iam_role.asg_service_discovery_role,
     aws_iam_role_policy.asg_service_discovery_role_policy,
+    time_sleep.wait_for_asg_role_propagation,
     aws_eks_access_entry.rtbfabric,
     kubernetes_role.rtbfabric_endpoint_reader,
     kubernetes_role_binding.rtbfabric_endpoint_reader

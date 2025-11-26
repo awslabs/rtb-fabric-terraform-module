@@ -70,6 +70,24 @@ resource "aws_iam_role_policy" "eks_service_discovery_role_policy" {
   })
 }
 
+# Wait for IAM role to propagate globally before RTB Fabric service can assume it
+resource "time_sleep" "wait_for_eks_role_propagation" {
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null && (
+    var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role == null ||
+    (
+      var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role != null &&
+      coalesce(var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.auto_create_role, true) == true
+    )
+  ) ? 1 : 0
+
+  depends_on = [
+    aws_iam_role.eks_service_discovery_role,
+    aws_iam_role_policy.eks_service_discovery_role_policy
+  ]
+
+  create_duration = "10s"
+}
+
 # ASG Service Discovery Role Configuration
 # This single role is assumed by RTB Fabric service and has all necessary permissions for ASG discovery
 
@@ -143,4 +161,22 @@ resource "aws_iam_role_policy" "asg_service_discovery_role_policy" {
       }
     ]
   })
+}
+
+# Wait for IAM role to propagate globally before RTB Fabric service can assume it
+resource "time_sleep" "wait_for_asg_role_propagation" {
+  count = var.responder_gateway.create && var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration != null && (
+    var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role == null ||
+    (
+      var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.asg_discovery_role != null &&
+      coalesce(var.responder_gateway.managed_endpoint_configuration.auto_scaling_groups_configuration.auto_create_role, true) == true
+    )
+  ) ? 1 : 0
+
+  depends_on = [
+    aws_iam_role.asg_service_discovery_role,
+    aws_iam_role_policy.asg_service_discovery_role_policy
+  ]
+
+  create_duration = "10s"
 }
