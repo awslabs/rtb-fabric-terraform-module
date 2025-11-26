@@ -352,3 +352,54 @@ variable "link" {
     error_message = "Module names must be unique within the module_configuration_list."
   }
 }
+
+variable "inbound_external_link" {
+  description = "Inbound External Link configuration for accepting connections from external RTB Fabric gateways"
+  type = object({
+    create     = optional(bool, false)
+    gateway_id = optional(string)
+    link_log_settings = optional(object({
+      error_log  = number
+      filter_log = number
+    }))
+    link_attributes = optional(object({
+      customer_provided_id = optional(string)
+      responder_error_masking = optional(list(object({
+        action                      = optional(string)
+        http_code                   = optional(string)
+        logging_types               = optional(set(string))
+        response_logging_percentage = optional(number)
+      })))
+    }))
+    tags = optional(map(string), {})
+  })
+  default = {}
+
+  validation {
+    condition     = var.inbound_external_link.gateway_id == null || can(regex("^rtb-gw-[a-z0-9-]{1,25}$", var.inbound_external_link.gateway_id))
+    error_message = "Gateway ID must match pattern ^rtb-gw-[a-z0-9-]{1,25}$."
+  }
+
+  validation {
+    condition     = var.inbound_external_link.tags == null || length(keys(var.inbound_external_link.tags)) <= 50
+    error_message = "Maximum of 50 tags allowed."
+  }
+
+  validation {
+    condition = !var.inbound_external_link.create || (
+      var.inbound_external_link.gateway_id != null &&
+      var.inbound_external_link.link_log_settings != null
+    )
+    error_message = "When create is true, gateway_id and link_log_settings are required."
+  }
+
+  validation {
+    condition = var.inbound_external_link.link_log_settings == null || (
+      var.inbound_external_link.link_log_settings.error_log >= 0 &&
+      var.inbound_external_link.link_log_settings.error_log <= 100 &&
+      var.inbound_external_link.link_log_settings.filter_log >= 0 &&
+      var.inbound_external_link.link_log_settings.filter_log <= 100
+    )
+    error_message = "Log sampling percentages must be between 0 and 100."
+  }
+}

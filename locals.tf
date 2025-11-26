@@ -23,6 +23,13 @@ locals {
     }
   ] : []
 
+  inbound_external_link_tags = length(var.inbound_external_link.tags) > 0 ? [
+    for key, value in var.inbound_external_link.tags : {
+      key   = key
+      value = value
+    }
+  ] : []
+
   # EKS Service Discovery Role name - use provided role name or default
   eks_service_discovery_role_name = var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null ? (
     var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role != null ?

@@ -53,7 +53,7 @@ module "rtb_fabric" {
         auto_create_role   = true
         auto_create_access = true
         auto_create_rbac   = true
-
+        eks_service_discovery_role = "TerraformRtbFabricDiscoveryForEks"
         # cluster_api_server_endpoint_uri automatically retrieved
         # cluster_api_server_ca_certificate_chain automatically retrieved
       }

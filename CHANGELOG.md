@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2024-11-26
+
+### Added
+- **Inbound External Link Support**: New resource type for accepting connections from external RTB Fabric gateways
+  - `inbound_external_link` variable for configuration
+  - Simplified log settings structure (flattened from nested CloudFormation format)
+  - Support for responder error masking configuration
+  - Standard Terraform map format for tags
+- New example: `examples/inbound-external-link/` with comprehensive documentation
+- Outputs for inbound external link (ID, ARN, status, timestamps)
+- Schema file: `schema/awscc-schema-inbound-external-link.json`
+
+### Documentation
+- Updated README with inbound external link usage examples
+- Added detailed example README for inbound external link configuration
+- Updated module description to include inbound external link support
+
 ## [0.2.2] - 2024-11-26
 
 ### Changed
