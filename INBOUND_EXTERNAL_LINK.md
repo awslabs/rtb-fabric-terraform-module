@@ -109,8 +109,11 @@ The module provides these outputs for inbound external links:
 - `inbound_external_link_id` - Link ID
 - `inbound_external_link_arn` - Link ARN
 - `inbound_external_link_status` - Link status
+- `inbound_external_link_gateway_id` - Gateway ID the link is attached to
 - `inbound_external_link_created_timestamp` - Creation time
 - `inbound_external_link_updated_timestamp` - Last update time
+
+**Note:** The connection URL/domain name comes from the responder gateway, not the link. Use `responder_gateway_domain_name` output to get the URL that external partners should connect to.
 
 ## Example Usage
 

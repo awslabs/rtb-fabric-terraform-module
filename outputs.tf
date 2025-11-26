@@ -127,7 +127,7 @@ output "link_full_object" {
 
 # Inbound External Link Outputs
 output "inbound_external_link_id" {
-  description = "ID of the created inbound external link"
+  description = "Link ID of the created inbound external link"
   value       = var.inbound_external_link.create ? awscc_rtbfabric_inbound_external_link.inbound_external_link[0].link_id : null
 }
 
@@ -139,6 +139,11 @@ output "inbound_external_link_arn" {
 output "inbound_external_link_status" {
   description = "Status of the created inbound external link"
   value       = var.inbound_external_link.create ? awscc_rtbfabric_inbound_external_link.inbound_external_link[0].link_status : null
+}
+
+output "inbound_external_link_gateway_id" {
+  description = "Gateway ID that the inbound external link is attached to"
+  value       = var.inbound_external_link.create ? awscc_rtbfabric_inbound_external_link.inbound_external_link[0].gateway_id : null
 }
 
 output "inbound_external_link_created_timestamp" {

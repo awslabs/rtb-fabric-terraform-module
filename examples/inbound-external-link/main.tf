@@ -39,7 +39,7 @@ module "rtb_fabric" {
 
 # Outputs
 output "link_id" {
-  description = "ID of the created inbound external link"
+  description = "Link ID of the created inbound external link"
   value       = module.rtb_fabric.inbound_external_link_id
 }
 
@@ -51,4 +51,19 @@ output "link_arn" {
 output "link_status" {
   description = "Status of the created inbound external link"
   value       = module.rtb_fabric.inbound_external_link_status
+}
+
+output "gateway_id" {
+  description = "Gateway ID that the link is attached to"
+  value       = module.rtb_fabric.inbound_external_link_gateway_id
+}
+
+output "created_timestamp" {
+  description = "Creation timestamp"
+  value       = module.rtb_fabric.inbound_external_link_created_timestamp
+}
+
+output "updated_timestamp" {
+  description = "Last update timestamp"
+  value       = module.rtb_fabric.inbound_external_link_updated_timestamp
 }

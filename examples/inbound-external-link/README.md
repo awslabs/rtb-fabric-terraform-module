@@ -82,12 +82,51 @@ tags = {
 
 ## Outputs
 
-- `link_id` - The ID of the created inbound external link
+- `link_id` - The link ID of the created inbound external link
 - `link_arn` - The ARN of the created inbound external link
-- `link_status` - The status of the link
+- `link_status` - The status of the link (e.g., ACTIVE, PENDING)
+- `gateway_id` - The gateway ID that the link is attached to
+- `created_timestamp` - When the link was created
+- `updated_timestamp` - When the link was last updated
+
+## How External Partners Connect
+
+The inbound external link itself doesn't provide a connection URL. Instead:
+
+1. **Your responder gateway** has a `domain_name` that external partners use to connect
+2. The **inbound external link** configures how your gateway accepts those connections
+3. Share your gateway's domain name with external partners
+
+**Example workflow:**
+```hcl
+# 1. Create responder gateway (or reference existing one)
+module "responder" {
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
+  responder_gateway = {
+    create = true
+    # ... configuration
+  }
+}
+
+# 2. Create inbound external link
+module "external_link" {
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
+  inbound_external_link = {
+    create     = true
+    gateway_id = module.responder.responder_gateway_id
+    # ... configuration
+  }
+}
+
+# 3. Share this domain with external partners
+output "partner_connection_url" {
+  value = module.responder.responder_gateway_domain_name
+}
+```
 
 ## Notes
 
 - The inbound external link must be attached to a responder gateway
-- External partners will need to configure their side to connect to your gateway
+- External partners connect to your **gateway's domain name**, not the link
+- The link configures error handling, logging, and other connection policies
 - Link acceptance and activation may be required depending on your RTB Fabric configuration
