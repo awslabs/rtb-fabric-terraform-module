@@ -62,13 +62,13 @@ None - this release is fully backward compatible with v0.1.0.
 
 ## Upgrade Guide
 
-### From v0.1.0 to v0.2.0
+### From v0.1.0 to v0.2.1
 
 No breaking changes - simply update your module source:
 
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.0"
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.1"
   # Your existing configuration works as-is
 }
 ```

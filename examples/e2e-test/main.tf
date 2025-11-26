@@ -38,7 +38,7 @@ resource "null_resource" "discovery_validation" {
 
 # Single module instance for complete E2E test: Requester + EKS Responder + Link
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.0" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.1" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
 
   # Optional: Customize the EKS Discovery Role name for enterprise naming conventions
   # rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
@@ -112,7 +112,7 @@ module "rtb_fabric" {
 
 # Separate module for the link to use gateway IDs from the first module
 module "rtb_fabric_link" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.0" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.1" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
 
   # Link between Requester and EKS Responder
   link = {

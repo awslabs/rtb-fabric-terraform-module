@@ -45,13 +45,13 @@ jobs:
           
           # Extract release notes for this version from RELEASE_NOTES.md
           if [ -f "RELEASE_NOTES.md" ]; then
-            # Try to extract section for this version
-            NOTES=$(awk "/## \[${VERSION}\]|## ${VERSION}|## v${VERSION}/{flag=1; next} /## \[|## [0-9]/{flag=0} flag" RELEASE_NOTES.md)
+            # Try to extract section for this version - support both # and ## headers
+            NOTES=$(awk "/^# Release v${VERSION}|^## \[${VERSION}\]|^## ${VERSION}|^## v${VERSION}/{flag=1; next} /^# Release|^## \[|^## [0-9]/{flag=0} flag" RELEASE_NOTES.md)
             
             if [ -z "$NOTES" ]; then
               # Fallback: use CHANGELOG.md if available
               if [ -f "CHANGELOG.md" ]; then
-                NOTES=$(awk "/## \[${VERSION}\]|## ${VERSION}|## v${VERSION}/{flag=1; next} /## \[|## [0-9]/{flag=0} flag" CHANGELOG.md)
+                NOTES=$(awk "/^# Release v${VERSION}|^## \[${VERSION}\]|^## ${VERSION}|^## v${VERSION}/{flag=1; next} /^# Release|^## \[|^## [0-9]/{flag=0} flag" CHANGELOG.md)
               fi
             fi
             
