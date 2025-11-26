@@ -5,6 +5,7 @@
 *.tfvars.json
 .terraform/
 .terraform.lock.hcl
+.external_modules/
 crash.log
 crash.*.log
 

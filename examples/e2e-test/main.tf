@@ -105,9 +105,9 @@ module "rtb_fabric_link" {
 
   # Link between Requester and EKS Responder
   link = {
-    create                 = true
-    gateway_id             = module.rtb_fabric.requester_gateway_id
-    peer_gateway_id        = module.rtb_fabric.responder_gateway_id
+    create          = true
+    gateway_id      = module.rtb_fabric.requester_gateway_id
+    peer_gateway_id = module.rtb_fabric.responder_gateway_id
 
     link_attributes = {
       customer_provided_id = "e2e-test-link"
@@ -132,7 +132,7 @@ module "rtb_fabric_link" {
     }
 
     tags = {
-      link-key: "linkvalue" 
+      link-key : "linkvalue"
     }
 
     # GA schema ModuleConfigurationList - matches AWS schema directly
