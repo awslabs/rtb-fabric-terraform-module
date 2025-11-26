@@ -342,12 +342,10 @@ module "rtb_fabric" {
     vpc_id             = "vpc-00108ced4ec00636b"
     subnet_ids         = ["subnet-0e656d1ce3ba7d025", "subnet-0efd6f0427bfe0a3b"]
     security_group_ids = ["sg-050ebc8a5303a9337"]
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+      Team        = "Platform"
+    }
   }
 }
 ```
@@ -366,12 +364,9 @@ module "rtb_fabric" {
     port               = 8080
     protocol           = "HTTP"
     domain_name        = "my-app.example.com"
-    tags = [
-      {
-        key   = "Environment"
-        value = "Development"
-      }
-    ]
+    tags = {
+      Environment = "Development"
+    }
   }
 }
 ```
@@ -423,12 +418,9 @@ module "rtb_fabric" {
       }
     }
     
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 }
 ```
@@ -482,12 +474,9 @@ module "rtb_fabric" {
       }
     }
     
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 }
 ```
@@ -540,12 +529,9 @@ module "rtb_fabric" {
       }
     }
     
-    tags = [
-      {
-        key   = "Environment"
-        value = "Development"
-      }
-    ]
+    tags = {
+      Environment = "Development"
+    }
   }
 }
 ```
@@ -573,12 +559,9 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 }
 ```
@@ -606,12 +589,9 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 }
 ```
@@ -641,12 +621,9 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Development"
-      }
-    ]
+    tags = {
+      Environment = "Development"
+    }
   }
 }
 ```
@@ -716,12 +693,10 @@ module "rtb_fabric_production" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+      Cluster     = "prod-eks-cluster"
+    }
   }
 }
 
@@ -754,12 +729,10 @@ module "rtb_fabric_staging" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Staging"
-      }
-    ]
+    tags = {
+      Environment = "Staging"
+      Cluster     = "staging-eks-cluster"
+    }
   }
 }
 ```
@@ -812,12 +785,10 @@ module "rtb_fabric" {
       }
     ]
     
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+      LinkType    = "rtb-link"
+    }
   }
 }
 ```
@@ -833,12 +804,9 @@ module "rtb_fabric" {
     vpc_id             = "vpc-xxx"
     subnet_ids         = ["subnet-xxx"]
     security_group_ids = ["sg-xxx"]
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 
   responder_gateway = {
@@ -850,12 +818,9 @@ module "rtb_fabric" {
     port               = 8080
     protocol           = "HTTP"
     domain_name        = "app.example.com"
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 }
 
@@ -877,12 +842,9 @@ module "rtb_fabric_link" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 }
 ```

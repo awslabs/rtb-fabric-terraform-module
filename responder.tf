@@ -12,7 +12,7 @@ resource "awscc_rtbfabric_responder_gateway" "responder_gateway" {
   # Optional attributes - pass through directly
   description = var.responder_gateway.description
   domain_name = var.responder_gateway.domain_name
-  tags        = var.responder_gateway.tags
+  tags        = local.responder_tags
 
   # Trust store configuration
   trust_store_configuration = var.responder_gateway.trust_store_configuration != null ? {

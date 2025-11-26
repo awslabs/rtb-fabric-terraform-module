@@ -1,3 +1,96 @@
+# Release v0.2.2 - Improved Tags UX & IAM Role Propagation Fix
+
+## What's New
+
+### Simplified Tags Format (Breaking Change)
+
+Tags now use the standard Terraform map format instead of CloudFormation list format, making the module more intuitive and consistent with other AWS Terraform modules.
+
+**Before:**
+```hcl
+tags = [
+  {
+    key   = "Environment"
+    value = "Production"
+  }
+]
+```
+
+**After:**
+```hcl
+tags = {
+  Environment = "Production"
+  Team        = "Platform"
+}
+```
+
+The module automatically converts the map format to the CloudFormation format required by the awscc provider internally.
+
+### IAM Role Propagation Fix
+
+Added automatic 10-second delay after IAM role creation to prevent "access denied" errors when RTB Fabric service attempts to assume newly created roles. This fixes the issue where the first `terraform apply` would fail with a 403 error, requiring a second apply.
+
+**Technical Details:**
+- Added `time_sleep` resources for both EKS and ASG discovery roles
+- Ensures IAM roles are fully propagated globally before use
+- Only applies when `auto_create_role = true`
+
+## Breaking Changes
+
+### Tags Format Change
+
+If you're using tags in your configuration, you must update them from list format to map format:
+
+```hcl
+# Old format (no longer supported)
+responder_gateway = {
+  tags = [
+    { key = "Environment", value = "Production" }
+  ]
+}
+
+# New format (required)
+responder_gateway = {
+  tags = {
+    Environment = "Production"
+  }
+}
+```
+
+This applies to:
+- `requester_gateway.tags`
+- `responder_gateway.tags`
+- `link.tags`
+
+## Bug Fixes
+
+- Fixed IAM eventual consistency issue causing 403 errors on first apply
+- Improved error handling for role assumption failures
+
+## Upgrade Guide
+
+### From v0.2.1 to v0.2.2
+
+1. **Update module source:**
+```hcl
+module "rtb_fabric" {
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.2"
+  # Your configuration
+}
+```
+
+2. **Update tags format** (if using tags):
+```hcl
+# Change from list format to map format
+tags = {
+  Environment = "Production"
+  Owner       = "TeamA"
+}
+```
+
+3. **Run terraform plan** to verify changes
+4. **Apply changes** - first apply will be faster and more reliable
+
 # Release v0.2.1 - Versions pinned to the tested set
 
 ## What's New

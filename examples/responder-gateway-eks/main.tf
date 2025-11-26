@@ -59,16 +59,10 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Test"
-      },
-      {
-        key   = "EKSCluster"
-        value = var.cluster_name
-      }
-    ]
+    tags = {
+      Environment = "Test"
+      EKSCluster  = var.cluster_name
+    }
   }
 }
 

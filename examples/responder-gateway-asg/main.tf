@@ -25,12 +25,9 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Test"
-      }
-    ]
+    tags = {
+      Environment = "Test"
+    }
   }
 }
 

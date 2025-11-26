@@ -22,7 +22,7 @@ resource "awscc_rtbfabric_link" "link" {
   http_responder_allowed    = try(var.link.http_responder_allowed, null)
   link_attributes           = var.link.link_attributes
   module_configuration_list = var.link.module_configuration_list
-  tags                      = var.link.tags
+  tags                      = local.link_tags
 
   # AWS only allows updating tags and link_log_settings after creation
   # All other fields are immutable and require replacement

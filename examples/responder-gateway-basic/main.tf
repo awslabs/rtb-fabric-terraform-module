@@ -10,12 +10,9 @@ module "rtb_fabric" {
     port               = 31234
     protocol           = "HTTP"
     domain_name        = var.domain_name
-    tags = [
-      {
-        key   = "Environment"
-        value = "Test"
-      }
-    ]
+    tags = {
+      Environment = "Test"
+    }
   }
 }
 

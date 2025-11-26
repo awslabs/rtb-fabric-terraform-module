@@ -38,7 +38,7 @@ resource "null_resource" "discovery_validation" {
 
 # Single module instance for complete E2E test: Requester + EKS Responder + Link
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.1" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "../../" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.1"
 
   # Optional: Customize the EKS Discovery Role name for enterprise naming conventions
   # rtbfabric_eks_discovery_role_name = "MyCompany-RTBFabric-EKS-Discovery-Role"
@@ -56,16 +56,11 @@ module "rtb_fabric" {
     vpc_id             = module.requester_cluster_discovery.discovered_vpc_id
     subnet_ids         = module.requester_cluster_discovery.discovered_private_subnet_ids
     security_group_ids = [module.requester_cluster_discovery.discovered_security_group_id]
-    tags = [
-      {
-        key   = "Environment"
-        value = "E2ETest"
-      },
-      {
-        key   = "EKSCluster"
-        value = var.requester_cluster_name
-      }
-    ]
+    tags = {
+      Environment = "E2ETest"
+      EKSCluster  = var.requester_cluster_name
+      NewTagTest  = "true"
+    }
   }
 
   providers = {
@@ -97,29 +92,22 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "E2ETest"
-      },
-      {
-        key   = "EKSCluster"
-        value = var.responder_cluster_name
-      }
-    ]
+    tags = {
+      Environment = "E2ETest"
+      EKSCluster  = var.responder_cluster_name
+    }
   }
 }
 
 # Separate module for the link to use gateway IDs from the first module
 module "rtb_fabric_link" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.1" # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
+  source = "../.." # "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.1.0"
 
   # Link between Requester and EKS Responder
   link = {
     create                 = true
     gateway_id             = module.rtb_fabric.requester_gateway_id
     peer_gateway_id        = module.rtb_fabric.responder_gateway_id
-    http_responder_allowed = true
 
     link_attributes = {
       customer_provided_id = "e2e-test-link"
@@ -141,6 +129,10 @@ module "rtb_fabric_link" {
           filter_log = 15
         }
       }
+    }
+
+    tags = {
+      link-key: "linkvalue" 
     }
 
     # GA schema ModuleConfigurationList - matches AWS schema directly

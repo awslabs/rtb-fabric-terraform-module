@@ -31,12 +31,9 @@ module "rtb_fabric" {
     # do not reuse this resource to create modules if you used http_responder_allowed. Use a separate template as shown in link-modules example
     # we are working to address this issue, however based on the design of RTB Fabric, link creation and module attachment will have to be a two-stage process.
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+    }
   }
 }
 

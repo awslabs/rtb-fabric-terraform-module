@@ -85,20 +85,11 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Staging"
-      },
-      {
-        key   = "Setup"
-        value = "Hybrid"
-      },
-      {
-        key   = "EKSCluster"
-        value = var.cluster_name
-      }
-    ]
+    tags = {
+      Environment = "Staging"
+      Setup       = "Hybrid"
+      EKSCluster  = var.cluster_name
+    }
   }
 
   # The module will automatically:

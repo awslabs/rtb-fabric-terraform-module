@@ -9,7 +9,7 @@ resource "awscc_rtbfabric_requester_gateway" "requester_gateway" {
 
   # Optional attributes - pass through directly
   description = var.requester_gateway.description
-  tags        = var.requester_gateway.tags
+  tags        = local.requester_tags
 }
 
 

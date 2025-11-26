@@ -99,20 +99,11 @@ module "rtb_fabric" {
       }
     }
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      },
-      {
-        key   = "Setup"
-        value = "Manual"
-      },
-      {
-        key   = "EKSCluster"
-        value = var.cluster_name
-      }
-    ]
+    tags = {
+      Environment = "Production"
+      Setup       = "Manual"
+      EKSCluster  = var.cluster_name
+    }
   }
 
   # The role and all permissions are pre-configured above

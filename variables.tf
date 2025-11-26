@@ -6,10 +6,7 @@ variable "requester_gateway" {
     vpc_id             = optional(string)
     subnet_ids         = optional(list(string))
     security_group_ids = optional(list(string))
-    tags = optional(list(object({
-      key   = string
-      value = string
-    })), [])
+    tags               = optional(map(string), {})
   })
   default = {}
 
@@ -22,7 +19,7 @@ variable "requester_gateway" {
   }
 
   validation {
-    condition     = var.requester_gateway.tags == null || length(var.requester_gateway.tags) <= 50
+    condition     = var.requester_gateway.tags == null || length(keys(var.requester_gateway.tags)) <= 50
     error_message = "Maximum of 50 tags allowed."
   }
 
@@ -71,10 +68,7 @@ variable "responder_gateway" {
         auto_create_role           = optional(bool, true) # Controls whether to create the eks_service_discovery_role or assume it exists
       }))
     }))
-    tags = optional(list(object({
-      key   = string
-      value = string
-    })), [])
+    tags = optional(map(string), {})
   })
   default = {}
 
@@ -113,7 +107,7 @@ variable "responder_gateway" {
   }
 
   validation {
-    condition     = var.responder_gateway.tags == null || length(var.responder_gateway.tags) <= 50
+    condition     = var.responder_gateway.tags == null || length(keys(var.responder_gateway.tags)) <= 50
     error_message = "Maximum of 50 tags allowed."
   }
 
@@ -276,10 +270,7 @@ variable "link" {
         }))
       }))
     })))
-    tags = optional(list(object({
-      key   = string
-      value = string
-    })), [])
+    tags = optional(map(string), {})
   })
   default = {}
 
@@ -294,7 +285,7 @@ variable "link" {
   }
 
   validation {
-    condition     = var.link.tags == null || length(var.link.tags) <= 50
+    condition     = var.link.tags == null || length(keys(var.link.tags)) <= 50
     error_message = "Maximum of 50 tags allowed."
   }
 

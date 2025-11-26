@@ -33,12 +33,9 @@ module "rtb_fabric" {
     vpc_id             = module.cluster_discovery.discovered_vpc_id
     subnet_ids         = module.cluster_discovery.discovered_private_subnet_ids
     security_group_ids = [module.cluster_discovery.discovered_security_group_id]
-    tags = [
-      {
-        key   = "Environment"
-        value = "Prod"
-      }
-    ]
+    tags = {
+      Environment = "Prod"
+    }
   }
 }
 

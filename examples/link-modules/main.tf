@@ -74,16 +74,10 @@ module "rtb_fabric" {
       }
     ]
 
-    tags = [
-      {
-        key   = "Environment"
-        value = "Production"
-      },
-      {
-        key   = "ManagedBy"
-        value = "Terraform"
-      }
-    ]
+    tags = {
+      Environment = "Production"
+      ManagedBy   = "Terraform"
+    }
   }
 }
 

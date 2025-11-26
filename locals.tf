@@ -1,6 +1,28 @@
 # Local values for computed configurations
 locals {
 
+  # Convert Terraform map tags to CloudFormation list format for awscc provider
+  requester_tags = length(var.requester_gateway.tags) > 0 ? [
+    for key, value in var.requester_gateway.tags : {
+      key   = key
+      value = value
+    }
+  ] : []
+
+  responder_tags = length(var.responder_gateway.tags) > 0 ? [
+    for key, value in var.responder_gateway.tags : {
+      key   = key
+      value = value
+    }
+  ] : []
+
+  link_tags = length(var.link.tags) > 0 ? [
+    for key, value in var.link.tags : {
+      key   = key
+      value = value
+    }
+  ] : []
+
   # EKS Service Discovery Role name - use provided role name or default
   eks_service_discovery_role_name = var.responder_gateway.managed_endpoint_configuration != null && var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration != null ? (
     var.responder_gateway.managed_endpoint_configuration.eks_endpoints_configuration.eks_service_discovery_role != null ?
