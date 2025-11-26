@@ -4,6 +4,11 @@ plugin "aws" {
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 
+# Disable IAM role policy validation due to complex conditionals with null values
+rule "aws_iam_role_invalid_assume_role_policy" {
+  enabled = false
+}
+
 plugin "terraform" {
   enabled = true
   preset  = "recommended"
