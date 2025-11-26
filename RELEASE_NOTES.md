@@ -155,14 +155,20 @@ None - this release is fully backward compatible with v0.1.0.
 
 ## Upgrade Guide
 
-### From v0.1.0 to v0.2.1
+### From v0.1.0 to v0.2.2
 
-No breaking changes - simply update your module source:
+Update your module source and convert tags to map format:
 
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.1"
-  # Your existing configuration works as-is
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.2"
+  
+  # Update tags from list to map format
+  requester_gateway = {
+    tags = {
+      Environment = "Production"
+    }
+  }
 }
 ```
 

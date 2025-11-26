@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2024-11-26
+
+### Changed
+- **BREAKING**: Tags now use standard Terraform map format instead of CloudFormation list format
+  - Before: `tags = [{ key = "Environment", value = "Production" }]`
+  - After: `tags = { Environment = "Production" }`
+  - Module automatically converts map format to CloudFormation format internally
+
+### Fixed
+- Added 10-second IAM role propagation delay to prevent 403 errors on first apply
+- IAM roles now fully propagate before RTB Fabric service attempts to assume them
+
+### Added
+- `time_sleep` resources for EKS and ASG discovery role propagation
+- Automatic tag format conversion in `locals.tf`
+
+### Updated
+- All examples updated to use new map-based tag format
+- Documentation updated with new tag format examples
+- Release notes with migration guide
+
+## [0.2.1] - 2024-11-26
+
+### Changed
+- Pinned provider versions to tested set
+- Added automated GitHub Actions release workflow
+
+## [0.2.0] - 2024-11-15
+
+### Added
+- Link module management support
+- ASG discovery role auto-creation with `auto_create_role` parameter
+- Custom role naming for ASG managed endpoints
+- Time provider integration for IAM policy propagation
+- Cleanup script for link state management
+
+### Fixed
+- Cloud Control API `http_responder_allowed` field handling
+- Module configuration schema in examples
+- Provider configuration documentation
+
+### Changed
+- Improved IAM role management for both EKS and ASG endpoints
+- Enhanced validation and error messages
+- Better documentation for provider configuration requirements
+
 ## [0.1.0] - 2024-10-30
 
 ### Added
