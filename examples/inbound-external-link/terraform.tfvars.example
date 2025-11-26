@@ -1,0 +1,5 @@
+# Gateway Configuration
+gateway_id = "rtb-gw-xxxxxxxxxxxxx"  # Replace with your responder gateway ID
+
+# Optional: Custom identifier for the link
+customer_provided_id = "my-external-partner-link"
