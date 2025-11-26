@@ -1,3 +1,10 @@
+# Release v0.2.1 - Versions pinned to the tested set
+
+## What's New
+
+- Versions pinned
+- release GitHub Action
+
 # Release v0.2.0 - Link Module Management & IAM Role Improvements
 
 ## What's New
