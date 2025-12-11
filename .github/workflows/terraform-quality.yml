@@ -29,6 +29,10 @@ jobs:
   terraform-quality:
     name: Terraform Quality & Security Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     
     steps:
       - name: Checkout code
