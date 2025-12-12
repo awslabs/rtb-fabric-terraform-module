@@ -29,6 +29,10 @@ jobs:
   terraform-quality:
     name: Terraform Quality & Security Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     
     steps:
       - name: Checkout code
@@ -39,7 +43,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ~1.6
+          terraform_version: ~1.14
 
       - name: Terraform Format Check
         id: fmt

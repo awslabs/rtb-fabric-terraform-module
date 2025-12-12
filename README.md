@@ -7,6 +7,7 @@ This module creates AWS RTB Fabric resources using Cloud Control APIs with GA sc
 - Requester RTB Fabric Gateways
 - Responder RTB Fabric Gateways (with managed EKS endpoints and customer role support)
 - RTB Fabric Links with advanced configuration options
+- Inbound External Links for accepting connections from external RTB Fabric gateways
 
 ## Key Features
 
@@ -26,7 +27,7 @@ When using managed endpoints (EKS or ASG), RTB Fabric service requires IAM roles
 ### Using Pinned Version (Recommended)
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.2"
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.3.0"
   
   # Your configuration here
   requester_gateway = {
@@ -788,6 +789,42 @@ module "rtb_fabric" {
     tags = {
       Environment = "Production"
       LinkType    = "rtb-link"
+    }
+  }
+}
+```
+
+### Inbound External Link
+```hcl
+module "rtb_fabric" {
+  source = "github.com/awslabs/rtb-fabric-terraform-module"
+
+  inbound_external_link = {
+    create     = true
+    gateway_id = "rtb-gw-abc123"  # Your responder gateway ID
+
+    link_log_settings = {
+      error_log  = 10
+      filter_log = 5
+    }
+
+    link_attributes = {
+      customer_provided_id = "external-partner-link"
+      
+      responder_error_masking = [
+        {
+          http_code                   = "400"
+          action                      = "NO_BID"
+          logging_types               = ["METRIC", "RESPONSE"]
+          response_logging_percentage = 15.0
+        }
+      ]
+    }
+
+    tags = {
+      Environment = "Production"
+      LinkType    = "External"
+      Partner     = "CompanyName"
     }
   }
 }

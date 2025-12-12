@@ -1,3 +1,78 @@
+# Release v0.3.0 - Inbound External Link Support
+
+## What's New
+
+### Inbound External Link Resource
+
+Added support for RTB Fabric Inbound External Links, allowing responder gateways to accept connections from external RTB Fabric gateways (partners, third-party systems).
+
+**Key Features:**
+- Create inbound external links for responder gateways
+- Configure error masking and logging for external connections
+- Simplified log settings configuration (flattened structure)
+- Standard Terraform map format for tags (consistent with other resources)
+
+**Example Usage:**
+```hcl
+inbound_external_link = {
+  create     = true
+  gateway_id = "rtb-gw-abc123"
+  
+  link_log_settings = {
+    error_log  = 10
+    filter_log = 5
+  }
+  
+  link_attributes = {
+    customer_provided_id = "external-partner-link"
+    responder_error_masking = [
+      {
+        http_code                   = "400"
+        action                      = "NO_BID"
+        logging_types               = ["METRIC", "RESPONSE"]
+        response_logging_percentage = 15.0
+      }
+    ]
+  }
+  
+  tags = {
+    Environment = "Production"
+    LinkType    = "External"
+  }
+}
+```
+
+### New Example
+
+Added `examples/inbound-external-link/` demonstrating:
+- Basic inbound external link configuration
+- Error masking setup
+- Log sampling configuration
+- Tag management
+
+## Upgrade Guide
+
+### From v0.2.2 to v0.3.0
+
+No breaking changes - this is a feature addition release.
+
+```hcl
+module "rtb_fabric" {
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.3.0"
+  # Your existing configuration works as-is
+}
+```
+
+To use the new inbound external link feature, add the configuration:
+
+```hcl
+inbound_external_link = {
+  create     = true
+  gateway_id = module.rtb_fabric.responder_gateway_id
+  # ... configuration
+}
+```
+
 # Release v0.2.2 - Improved Tags UX & IAM Role Propagation Fix
 
 ## What's New
@@ -155,13 +230,13 @@ None - this release is fully backward compatible with v0.1.0.
 
 ## Upgrade Guide
 
-### From v0.1.0 to v0.2.2
+### From v0.1.0 to v0.3.0
 
 Update your module source and convert tags to map format:
 
 ```hcl
 module "rtb_fabric" {
-  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.2.2"
+  source = "github.com/awslabs/rtb-fabric-terraform-module?ref=v0.3.0"
   
   # Update tags from list to map format
   requester_gateway = {
