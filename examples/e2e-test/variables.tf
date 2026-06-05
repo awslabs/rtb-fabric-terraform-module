@@ -5,8 +5,8 @@ variable "requester_cluster_name" {
   type        = string
 
   validation {
-    condition     = length(var.requester_cluster_name) > 0
-    error_message = "Requester cluster name must not be empty."
+    condition     = can(regex("^[0-9A-Za-z][A-Za-z0-9_-]{0,99}$", var.requester_cluster_name))
+    error_message = "requester_cluster_name must be 1-100 characters, start with a letter or digit, and contain only letters, digits, hyphens, and underscores (per EKS cluster naming rules)."
   }
 }
 
@@ -15,8 +15,8 @@ variable "responder_cluster_name" {
   type        = string
 
   validation {
-    condition     = length(var.responder_cluster_name) > 0
-    error_message = "Responder cluster name must not be empty."
+    condition     = can(regex("^[0-9A-Za-z][A-Za-z0-9_-]{0,99}$", var.responder_cluster_name))
+    error_message = "responder_cluster_name must be 1-100 characters, start with a letter or digit, and contain only letters, digits, hyphens, and underscores (per EKS cluster naming rules)."
   }
 }
 

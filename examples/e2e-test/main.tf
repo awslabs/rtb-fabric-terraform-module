@@ -23,16 +23,18 @@ locals {
   responder_subnet_discovery_failed = length(module.responder_cluster_discovery.discovered_private_subnet_ids) == 0
 
   discovery_failed = local.requester_vpc_discovery_failed || local.requester_subnet_discovery_failed || local.responder_vpc_discovery_failed || local.responder_subnet_discovery_failed
-
-  discovery_error_message = local.discovery_failed ? "Auto-discovery failed for one or more clusters. Please verify: 1) Clusters '${var.requester_cluster_name}' and '${var.responder_cluster_name}' exist, 2) VPCs are tagged with 'kubernetes.io/cluster/<cluster_name>', 3) Subnets are tagged with 'kubernetes.io/role/internal-elb=1'." : ""
 }
 
-# Validation resource to provide clear error messages
+# Validation resource to provide clear error messages.
+# Uses a Terraform-native precondition instead of a local-exec provisioner: the
+# error_message is rendered by Terraform and never passed to a shell, so input
+# values such as the cluster name variables cannot influence command execution.
 resource "null_resource" "discovery_validation" {
-  count = local.discovery_failed ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "echo 'ERROR: ${local.discovery_error_message}' && exit 1"
+  lifecycle {
+    precondition {
+      condition     = !local.discovery_failed
+      error_message = "Auto-discovery failed for one or more clusters. Please verify: 1) Clusters ${var.requester_cluster_name} and ${var.responder_cluster_name} exist, 2) VPCs are tagged with kubernetes.io/cluster/<cluster_name>, 3) Subnets are tagged with kubernetes.io/role/internal-elb=1."
+    }
   }
 }
 
