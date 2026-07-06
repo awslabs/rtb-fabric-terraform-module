@@ -10,16 +10,18 @@ module "cluster_discovery" {
 locals {
   vpc_discovery_failed    = length(module.cluster_discovery.discovered_vpc_id) == 0
   subnet_discovery_failed = length(module.cluster_discovery.discovered_private_subnet_ids) == 0
-
-  discovery_error_message = local.vpc_discovery_failed || local.subnet_discovery_failed ? "Auto-discovery failed for cluster '${var.cluster_name}'. Please verify: 1) The cluster exists, 2) VPC is tagged with 'kubernetes.io/cluster/${var.cluster_name}', 3) Subnets are tagged with 'kubernetes.io/role/internal-elb=1'. If auto-discovery cannot be used, consider using a different example with manual network configuration." : ""
 }
 
-# Validation resource to provide clear error messages
+# Validation resource to provide clear error messages.
+# Uses a Terraform-native precondition instead of a local-exec provisioner: the
+# error_message is rendered by Terraform and never passed to a shell, so input
+# values such as var.cluster_name cannot influence command execution.
 resource "null_resource" "discovery_validation" {
-  count = (local.vpc_discovery_failed || local.subnet_discovery_failed) ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "echo 'ERROR: ${local.discovery_error_message}' && exit 1"
+  lifecycle {
+    precondition {
+      condition     = !local.vpc_discovery_failed && !local.subnet_discovery_failed
+      error_message = "Auto-discovery failed for cluster ${var.cluster_name}. Please verify: 1) The cluster exists, 2) VPC is tagged with kubernetes.io/cluster/${var.cluster_name}, 3) Subnets are tagged with kubernetes.io/role/internal-elb=1. If auto-discovery cannot be used, consider using a different example with manual network configuration."
+    }
   }
 }
 

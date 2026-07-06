@@ -5,8 +5,8 @@ variable "cluster_name" {
   type        = string
 
   validation {
-    condition     = length(var.cluster_name) > 0
-    error_message = "Cluster name must not be empty."
+    condition     = can(regex("^[0-9A-Za-z][A-Za-z0-9_-]{0,99}$", var.cluster_name))
+    error_message = "cluster_name must be 1-100 characters, start with a letter or digit, and contain only letters, digits, hyphens, and underscores (per EKS cluster naming rules)."
   }
 }
 
